@@ -1,0 +1,16 @@
+{
+    "name": "ambax/crypto_trade",
+    "type": "project",
+    "autoload": {
+        "psr-4": {
+            "Ambax\\CryptoTrade\\": "app/"
+        }
+    },
+    "authors": [
+        {
+            "name": "ambivalent-axiom",
+            "email": "artmelnis@gmail.com"
+        }
+    ],
+    "require": {}
+}

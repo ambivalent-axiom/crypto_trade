@@ -12,5 +12,8 @@
             "email": "artmelnis@gmail.com"
         }
     ],
-    "require": {}
+    "require": {
+        "symfony/console": "^5.4",
+        "monolog/monolog": "^2.9"
+    }
 }

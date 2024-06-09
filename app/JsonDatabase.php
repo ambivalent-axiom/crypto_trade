@@ -10,7 +10,7 @@ class JsonDatabase implements Database
     public function __construct()
     {
         $this->logger = new Logger('jsonDatabase');
-        $this->logger->pushHandler(new StreamHandler('warehouse.log'));
+        $this->logger->pushHandler(new StreamHandler('app.log'));
     }
     public function connect($path): void
     {

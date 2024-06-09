@@ -1,6 +1,19 @@
 <?php
 require_once "vendor/autoload.php";
-//shell_exec()
-$i = getenv('COINMC');
+use Ambax\CryptoTrade\CoinMC;
+use Ambax\CryptoTrade\Client;
+use Ambax\CryptoTrade\Exchange;
 
-echo $i;
+
+//$c = new CoinMC();
+//$a = json_decode($c->getLatest());
+//
+//foreach ($a->data as $coin) {
+//    echo $coin->quote->EUR->price . "\n";
+//}
+
+$art = new Client('Arthur', 'EUR');
+$art->showStatus();
+
+$coinMarketCap = new Exchange($art);
+$coinMarketCap->listTop();

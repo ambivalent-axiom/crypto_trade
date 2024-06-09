@@ -10,9 +10,11 @@ use Symfony\Component\Console\Helper\Table;
 
 class Ui
 {
-    private array $menuOpt;
-
-    public static function showTable(array $tColumn, array $tContent, string $tHeader = "Table", string $tFooter = "")
+    public static function showTable(
+        array $tColumn,
+        array $tContent,
+        string $tHeader = "Table",
+        string $tFooter = ""): void
     {
         $output = new ConsoleOutput();
         $table = new Table($output);
@@ -23,6 +25,23 @@ class Ui
             ->setRows($tContent)
             ->setFooterTitle($tFooter)
             ->render();
+    }
+    public static function menu(string $query, array $options): string
+    {
+        $output = new ConsoleOutput();
+        $input = new ArgvInput();
+        $helper = new QuestionHelper();
+        $choice = new ChoiceQuestion($query, $options);
+        $choice->setErrorMessage('Option %s is invalid.');
+        return $helper->ask($input, $output, $choice);
+    }
+    public static function question(string $question): string
+    {
+        $output = new ConsoleOutput();
+        $input = new ArgvInput();
+        $helper = new QuestionHelper();
+        $question = new ConfirmationQuestion($question);
+        return $helper->ask($input, $output, $question);
     }
 }
 

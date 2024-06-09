@@ -1,5 +1,5 @@
 <?php
-namespace Ambax\CryptoTrade;
+namespace Ambax\CryptoTrade\api;
 class Api
 {
     protected string $apiKey;

@@ -25,6 +25,7 @@ while(true) {
             $coinMarketCap->listTop();
             break;
         case 'search currency by ticker':
+            $coinMarketCap->searchBySymbol();
             break;
         case 'buy':
             //TODO add buy logic

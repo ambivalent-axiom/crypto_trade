@@ -1,11 +1,11 @@
 <?php
-namespace Ambax\CryptoTrade;
+namespace Ambax\CryptoTrade\api;
 
 class CoinMC extends Api
 {
     private const PARAMS = [
         'start' => '1',
-        'limit' => '10',
+        'limit' => '100',
         'convert' => 'EUR'
     ];
     private const URL = 'https://pro-api.coinmarketcap.com/';

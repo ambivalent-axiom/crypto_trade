@@ -1,5 +1,5 @@
 <?php
-namespace Ambax\CryptoTrade;
+namespace Ambax\CryptoTrade\database;
 interface Database
 {
     public function connect($path);

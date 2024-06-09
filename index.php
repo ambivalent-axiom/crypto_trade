@@ -5,12 +5,12 @@ use Ambax\CryptoTrade\Exchange;
 use Ambax\CryptoTrade\Ui;
 
 const MAIN_MENU = [
-    'list Top Currencies',
-    'search currency by ticker',
+    'list Top',
+    'find by ticker',
     'buy',
     'sell',
-    'show wallet',
-    'transaction list',
+    'wallet',
+    'x-actions',
     'exit'
 ];
 
@@ -21,25 +21,25 @@ $coinMarketCap = new Exchange($art);
 while(true) {
     $option = Ui::menu('Main Menu', MAIN_MENU);
     switch ($option) {
-        case 'list Top Currencies':
+        case MAIN_MENU[0]: // list top currencies
             $coinMarketCap->listTop();
             break;
-        case 'search currency by ticker':
-            $coinMarketCap->searchBySymbol();
+        case MAIN_MENU[1]:  // list search results
+            $coinMarketCap->listSearch(strtoupper(readline("Ticking symbol: ")));
             break;
-        case 'buy':
-            //TODO add buy logic
+        case MAIN_MENU[2]:  //'buy':
+            $coinMarketCap->buy(strtoupper(readline("Symbol: ")), readline("For how many: "));
             break;
-        case 'sell':
-            //TODO add sell logic
+        case MAIN_MENU[3]: // sell
+            $coinMarketCap->sell();
             break;
-        case 'show wallet':
-            $art->showStatus();
+        case MAIN_MENU[4]: // show wallet
+            $coinMarketCap->showStatus();
             break;
-        case 'transaction list':
+        case MAIN_MENU[5]:  //transaction list
             //TODO add xtr list logic
             break;
-        case 'exit':
+        case MAIN_MENU[6]: // exit
             exit;
     }
 }

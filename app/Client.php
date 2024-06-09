@@ -7,6 +7,7 @@ class Client implements \JsonSerializable
     private string $currency;
     private array $wallet;
     private array $transactions;
+    private const WALLET_COLUMNS = ['Symbol', 'Amount', 'Transactions'];
 
     public function __construct(string $name, string $currency, array $wallet = Null, array $transactions = [])
     {
@@ -23,20 +24,6 @@ class Client implements \JsonSerializable
             'transactions' => $this->transactions
         ];
     }
-
-
-    public function showStatus(): void
-    {
-        $currencies = array_keys($this->wallet);
-        echo 'Client: ' . $this->name . "\n";
-        echo 'Currency: ' . $this->currency . "\n";
-        echo 'Transactions: ' . count($this->transactions) . "\n";
-        echo 'Wallet: ' . "\n";
-        for ($i = 0; $i < count($this->wallet); $i++) {
-            echo $currencies[$i] . ": " . $this->wallet[$currencies[$i]] . "\n";
-        }
-    }
-
     public function getName(): string
     {
         return $this->name;
@@ -48,5 +35,42 @@ class Client implements \JsonSerializable
     public function getCurrency(): string
     {
         return $this->currency;
+    }
+    public function addToWallet(string $symbol, float $amount): void
+    {
+        if(isset($this->wallet[$symbol])) {
+            $this->wallet[$symbol] += $amount;
+        } else {
+            $this->wallet[$symbol] = $amount;
+        }
+    }
+    public function takeFromWallet(string $symbol, float $amount): void
+    {
+        if(isset($this->wallet[$symbol])) {
+            $this->wallet[$symbol] -= $amount;
+        } else {
+            $this->wallet[$symbol] = $amount;
+        }
+        if($symbol != 'Eur' && $this->wallet[$symbol] == 0) {
+            unset($this->wallet[$symbol]);
+        }
+    }
+    public function getWalletCurrencies(): array
+    {
+        $wallet = array_keys($this->wallet);
+        unset($wallet[array_search($this->currency, $wallet)]);
+        return $wallet;
+    }
+    public function getCurrencyAmount(string $symbol): float
+    {
+        return $this->wallet[$symbol] ?? 0;
+    }
+    public function getWallet(): array
+    {
+        return $this->wallet;
+    }
+    public function getWalletColumns(): array
+    {
+        return self::WALLET_COLUMNS;
     }
 }

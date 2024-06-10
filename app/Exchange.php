@@ -12,10 +12,13 @@ class Exchange {
     private const DISPLAY_OFFSET = 0;
     private const DISPLAY_LIMIT = 10;
 
-    public function __construct(Client $client) {
-        $this->client = $client;
-        $this->db = new JsonDatabase();
+    public function __construct() {
+        //client initialization
+        $this->client = $this->initClient();
+        $this->db = new JsonDatabase($this->client->jsonSerialize());
         $this->db->connect($this->client->getId());
+        $this->fillClient($this->db->read()[0]);
+        //api initialization
         try {
             $this->exchangeApi = new CoinMC();
             $this->latestUpdate = $this->exchangeApi->getLatest();
@@ -23,6 +26,7 @@ class Exchange {
             echo $e->getMessage();
             exit;
         }
+        //other stuff
         $this->tableColumns = ['Name', 'Symbol', 'Price ' . $this->client->getCurrency()];
     }
     private function fetchLatestUpdate(): string
@@ -65,6 +69,23 @@ class Exchange {
                 return $amount;
             }
         }
+    }
+    private function initClient(): Client
+    {
+        if($list = Client::getClientList())
+        {
+            $key = Ui::menu('Select the client: ', array_keys($list));
+            return new Client($key, $list[$key]);
+        }
+        //authenticate??
+        //create new client
+        return new Client(readline('Enter your name: '));
+    }
+    private function fillClient($data): void
+    {
+        $this->client->setCurrency($data->currency);
+        $this->client->setWallet((array) $data->wallet);
+        $this->client->setTransactions($data->transactions);
     }
     public function listTop(): void
     {

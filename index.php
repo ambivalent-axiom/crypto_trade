@@ -1,13 +1,9 @@
 <?php
 require_once "vendor/autoload.php";
-use Ambax\CryptoTrade\Client;
 use Ambax\CryptoTrade\Exchange;
 use Ambax\CryptoTrade\Ui;
 
-//init
-$art = new Client('Arthur', 'EUR');
-$coinMarketCap = new Exchange($art);
-
+$coinMarketCap = new Exchange();
 while(true) {
     $option = Ui::menu('Main Menu');
     switch ($option) {

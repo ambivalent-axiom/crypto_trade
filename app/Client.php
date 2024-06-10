@@ -1,5 +1,6 @@
 <?php
 namespace Ambax\CryptoTrade;
+use Ambax\CryptoTrade\database\JsonDatabase;
 use Carbon\Carbon;
 use Ramsey\Uuid\Uuid;
 
@@ -11,34 +12,47 @@ class Client implements \JsonSerializable
     private array $wallet;
     private array $transactions;
     private const WALLET_COLUMNS = ['Symbol', 'Amount', 'Transactions'];
+    private const DEFAULT_CURRENCY = 'EUR';
 
-    public function __construct(string $name, string $currency, array $wallet = Null, array $transactions = [])
+    public function __construct(
+        string $name,
+        string $id = null,
+        string $currency = Null,
+        array $wallet = Null,
+        array $transactions = null
+    )
     {
         $this->name = $name;
-        $this->id = Uuid::uuid4()->toString();
-        $this->currency = $currency;
-        $this->wallet = $wallet ? : [$this->currency => 1000];
-        $this->transactions = $transactions;
+        $this->id = $id ?? Uuid::uuid4()->toString();
+        $this->currency = $currency ?? self::DEFAULT_CURRENCY;
+        $this->wallet = $wallet ?? [$this->currency => 1000];
+        $this->transactions = $transactions ?? [];
     }
     public function jsonSerialize()
     {
-        return [
+        return [[
+            'id' => $this->id,
             'name' => $this->name,
+            'currency' => $this->currency,
             'wallet' => $this->wallet,
             'transactions' => $this->transactions
-        ];
+        ]];
     }
     public function getName(): string
     {
         return $this->name;
     }
-    public function setName(string $name): void
-    {
-        $this->name = $name;
-    }
     public function getCurrency(): string
     {
         return $this->currency;
+    }
+    public function setCurrency(string $currency): void
+    {
+        $this->currency = $currency;
+    }
+    public function setWallet(array $wallet): void
+    {
+        $this->wallet = $wallet;
     }
     public function addToWallet(string $symbol, float $amount): void
     {
@@ -96,8 +110,24 @@ class Client implements \JsonSerializable
     {
         return $this->transactions;
     }
+    public function setTransactions(array $transactions): void
+    {
+        $this->transactions = $transactions;
+    }
     public function getId(): string
     {
         return $this->id;
+    }
+    public static function getClientList(): array
+    {
+        $clients = [];
+        if ($files = glob(JsonDatabase::DB_DIR . "*"))
+        {
+            foreach ($files as $client) {
+                $client = json_decode(file_get_contents($client))[0];
+                $clients[$client->name] = $client->id;
+            }
+        }
+        return $clients;
     }
 }

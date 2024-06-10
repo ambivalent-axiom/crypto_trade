@@ -17,6 +17,7 @@
         "monolog/monolog": "^2.9",
       "ext-json": "*",
       "ext-curl": "*",
-      "ext-readline": "*"
+      "ext-readline": "*",
+      "ext-mysql_xdevapi": "*"
     }
 }

@@ -11,7 +11,12 @@ class CoinMC extends Api
     private const URL = 'https://pro-api.coinmarketcap.com/';
     public function __construct()
     {
-        parent::__construct(self::URL, getenv('COINMC'));
+        if (getenv('COINMC')) {
+            parent::__construct(self::URL, getenv('COINMC'));
+        } else {
+            throw new \Exception("Fatal Error! Coinmarketcap API key not loaded! Unable to load crypto database.\n");
+        }
+
     }
     public function getLatest(): string
     {

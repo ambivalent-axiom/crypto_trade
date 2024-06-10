@@ -10,6 +10,15 @@ use Symfony\Component\Console\Helper\Table;
 
 class Ui
 {
+    private const MAIN_MENU = [
+        'list Top',
+        'find by ticker',
+        'buy',
+        'sell',
+        'wallet',
+        'x-actions',
+        'exit'
+    ];
     public static function showTable(
         array $tColumn,
         array $tContent,
@@ -26,7 +35,7 @@ class Ui
             ->setFooterTitle($tFooter)
             ->render();
     }
-    public static function menu(string $query, array $options): string
+    public static function menu(string $query, array $options = self::MAIN_MENU): string
     {
         $output = new ConsoleOutput();
         $input = new ArgvInput();
@@ -42,6 +51,10 @@ class Ui
         $helper = new QuestionHelper();
         $question = new ConfirmationQuestion($question);
         return $helper->ask($input, $output, $question);
+    }
+    public static function getMainMenu(): array
+    {
+        return self::MAIN_MENU;
     }
 }
 

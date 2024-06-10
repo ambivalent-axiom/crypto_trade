@@ -75,11 +75,13 @@ class Exchange {
     {
         if($list = Client::getClientList())
         {
+            $list['new'] = 0;
             $key = Ui::menu('Select the client: ', array_keys($list));
+            if ($key == 'new') {
+                return new Client(readline('Enter your name: '));
+            }
             return new Client($key, $list[$key]);
         }
-        //authenticate??
-        //create new client
         return new Client(readline('Enter your name: '));
     }
     private function fillClient(\stdClass $data): void

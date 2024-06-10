@@ -21,7 +21,9 @@ class JsonDatabase implements Database
             $this->logger->info('db ' . $this->filepath . ' load success.');
         } else {
             $this->data = [];
-            $this->logger->info('db ' . $this->filepath . ' load fail. Empty array returned.');
+            fopen($this->filepath, 'w');
+            file_put_contents($this->filepath, json_encode($this->data, JSON_PRETTY_PRINT));
+            $this->logger->info('db ' . $this->filepath . ' new database created. Empty array returned.');
         }
     }
     public function read(): array

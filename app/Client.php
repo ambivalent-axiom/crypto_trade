@@ -1,9 +1,12 @@
 <?php
 namespace Ambax\CryptoTrade;
+use Carbon\Carbon;
+use Ramsey\Uuid\Uuid;
 
 class Client implements \JsonSerializable
 {
     private string $name;
+    private string $id;
     private string $currency;
     private array $wallet;
     private array $transactions;
@@ -12,6 +15,7 @@ class Client implements \JsonSerializable
     public function __construct(string $name, string $currency, array $wallet = Null, array $transactions = [])
     {
         $this->name = $name;
+        $this->id = Uuid::uuid4()->toString();
         $this->currency = $currency;
         $this->wallet = $wallet ? : [$this->currency => 1000];
         $this->transactions = $transactions;
@@ -72,5 +76,28 @@ class Client implements \JsonSerializable
     public function getWalletColumns(): array
     {
         return self::WALLET_COLUMNS;
+    }
+    public function addTransaction(
+        string $act,
+        string $symbol,
+        float $cryptoAmount,
+        float $localCurrency): void
+    {
+        $transaction = new \stdClass();
+        $transaction->timestamp = Carbon::now();
+        $transaction->act = $act;
+        $transaction->symbol = $symbol;
+        $transaction->amount = $cryptoAmount;
+        $transaction->currency = $this->currency;
+        $transaction->localCurrency = $localCurrency;
+        $this->transactions[] = $transaction;
+    }
+    public function getTransactions(): array
+    {
+        return $this->transactions;
+    }
+    public function getId(): string
+    {
+        return $this->id;
     }
 }

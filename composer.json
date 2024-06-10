@@ -18,6 +18,7 @@
       "ext-json": "*",
       "ext-curl": "*",
       "ext-readline": "*",
-      "ext-mysql_xdevapi": "*"
+        "nesbot/carbon": "^2.72",
+        "ramsey/uuid": "^4.2"
     }
 }

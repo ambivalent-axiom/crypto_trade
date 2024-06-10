@@ -15,19 +15,31 @@ while(true) {
             $coinMarketCap->listTop();
             break;
         case Ui::getMainMenu()[1]:  // list search results
-            $coinMarketCap->listSearch(strtoupper(readline("Ticking symbol: ")));
+            $coinMarketCap->listSearchResults(strtoupper(readline("Ticking symbol: ")));
             break;
         case Ui::getMainMenu()[2]:  //'buy':
-            $coinMarketCap->buy(strtoupper(readline("Symbol: ")), readline("For how many: "));
+            try {
+                $coinMarketCap->buy(strtoupper(readline("Symbol: ")), readline("For how many: "));
+            } catch (Exception $e) {
+                echo $e->getMessage();
+            }
             break;
         case Ui::getMainMenu()[3]: // sell
-            $coinMarketCap->sell();
+            try {
+                $coinMarketCap->sell();
+            } catch (Exception $e) {
+                echo $e->getMessage();
+            }
             break;
         case Ui::getMainMenu()[4]: // show wallet
-            $coinMarketCap->showStatus();
+            $coinMarketCap->showClientWalletStatus();
             break;
         case Ui::getMainMenu()[5]:  //transaction list
-            //TODO add xtr list logic
+            try {
+                $coinMarketCap->showTransactionHistory();
+            } catch (Exception $e) {
+                echo $e->getMessage();
+            }
             break;
         case Ui::getMainMenu()[6]: // exit
             exit;

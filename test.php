@@ -1,4 +1,10 @@
 <?php
-require_once "vendor/autoload.php";
+namespace Ambax\CryptoTrade;
 use Ambax\CryptoTrade\api\CoinMC;
+use Ambax\CryptoTrade\database\JsonDatabase;
+
+
+
+
+
 

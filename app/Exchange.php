@@ -121,6 +121,9 @@ class Exchange {
         if(empty($currency)) {
             throw new \Exception('Could not find symbol ' . $symbol . "\n");
         }
+        if($cost > $this->client->getWallet()[$this->client->getCurrency()]) {
+            throw new \Exception('Insufficient wallet balance for this transaction!' . "\n");
+        }
         if( ! Ui::question("Are you sure you want to proceed with order?")) {
             throw new \Exception('Action aborted ' . $symbol . "\n");
         }

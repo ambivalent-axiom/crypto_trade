@@ -161,9 +161,17 @@ class Exchange {
     {
         $columns = $this->client->getWalletColumns();
         $keys = array_keys($this->client->getWallet());
-        $content = array_map(function ($key, $item) {
-            return [$key, $item];
-        }, $keys, $this->client->getWallet());
+
+        $transactions = array_fill_keys($keys, 0);
+        foreach ($this->client->getTransactions() as $transaction) {
+            if (isset($transactions[$transaction->symbol])) {
+                $transactions[$transaction->symbol] += 1;
+            }
+        }
+
+        $content = array_map(function ($key, $item, $xtrCount): array {
+            return [$key, $item, $xtrCount];
+        }, $keys, $this->client->getWallet(), $transactions);
         Ui::showTable($columns, $content, $this->client->getName(), $this->client->getCurrency());
     }
     public function showTransactionHistory(): void

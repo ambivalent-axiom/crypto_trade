@@ -13,13 +13,15 @@ class Client implements \JsonSerializable
     private array $transactions;
     private const WALLET_COLUMNS = ['Symbol', 'Amount', 'Transactions'];
     private const DEFAULT_CURRENCY = 'EUR';
+    private const DEFAULT_TIMEZONE = 'Europe/Riga';
 
     public function __construct(
         string $name,
         string $id = null,
         string $currency = Null,
         array $wallet = Null,
-        array $transactions = null
+        array $transactions = null,
+        string $timezone = null
     )
     {
         $this->name = $name;
@@ -27,6 +29,7 @@ class Client implements \JsonSerializable
         $this->currency = $currency ?? self::DEFAULT_CURRENCY;
         $this->wallet = $wallet ?? [$this->currency => 1000];
         $this->transactions = $transactions ?? [];
+        $this->timezone = $timezone ?? self::DEFAULT_TIMEZONE;
     }
     public function jsonSerialize()
     {
@@ -94,11 +97,11 @@ class Client implements \JsonSerializable
     public function addTransaction(
         string $act,
         string $symbol,
-        float $cryptoAmount,
-        float $localCurrency): void
+        string $cryptoAmount,
+        string $localCurrency): void
     {
         $transaction = new \stdClass();
-        $transaction->timestamp = Carbon::now();
+        $transaction->timestamp = Carbon::now($this->timezone);
         $transaction->act = $act;
         $transaction->symbol = $symbol;
         $transaction->amount = $cryptoAmount;

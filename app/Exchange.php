@@ -2,6 +2,7 @@
 namespace Ambax\CryptoTrade;
 use Ambax\CryptoTrade\api\CoinMC;
 use Ambax\CryptoTrade\database\JsonDatabase;
+use Carbon\Carbon;
 
 class Exchange {
     private Client $client;
@@ -81,11 +82,17 @@ class Exchange {
         //create new client
         return new Client(readline('Enter your name: '));
     }
-    private function fillClient($data): void
+    private function fillClient(\stdClass $data): void
     {
         $this->client->setCurrency($data->currency);
         $this->client->setWallet((array) $data->wallet);
         $this->client->setTransactions($data->transactions);
+    }
+    private function numberFormat(float $number): string
+    {
+        $formattedNumber = rtrim(sprintf('%.10f', $number), '0');
+        $formattedNumber = rtrim($formattedNumber, '.');
+        return $formattedNumber;
     }
     public function listTop(): void
     {
@@ -115,7 +122,7 @@ class Exchange {
         $rows[0]['price'] = number_format($rows[0]['price'],2, '.', '');
         Ui::showTable($this->tableColumns, $rows, "Search By $query");
     }
-    public function buy(string $symbol, int $cost): void
+    public function buy(string $symbol, float $cost): void
     {
         $currency = $this->searchBySymbol($symbol);
         if(empty($currency)) {
@@ -132,7 +139,12 @@ class Exchange {
         $boughtAmount = $cost/$price;
         $this->client->takeFromWallet($this->client->getCurrency(), $cost);
         $this->client->addToWallet($symbol, $boughtAmount);
-        $this->client->addTransaction('Buy', $symbol, $boughtAmount, $cost);
+        $this->client->addTransaction(
+            'Buy',
+            $symbol,
+            $this->numberFormat($boughtAmount),
+            $this->numberFormat($cost)
+        );
         $this->writeDatabase();
     }
     public function sell(): void
@@ -150,14 +162,23 @@ class Exchange {
         $amount = $this->chooseAmount($symbol);
         $currency = $this->searchBySymbol($symbol);
         if(empty($currency)) {return;}
-        if( ! Ui::question("Are you sure you want to sell $amount $symbol?")) {
+        if( ! Ui::question(
+            "Are you sure you want to sell " .
+            $this->numberFormat($amount) . " " .
+            $symbol .
+            "?")) {
             return;
         }
         $price = $currency[0]['price'];
         $inClientCurrency = $amount * $price;
         $this->client->takeFromWallet($symbol, $amount);
         $this->client->addToWallet($this->client->getCurrency(), $inClientCurrency);
-        $this->client->addTransaction('Sell', $symbol, $amount, $inClientCurrency);
+        $this->client->addTransaction(
+            'Sell',
+            $symbol,
+            $this->numberFormat($amount),
+            $this->numberFormat($inClientCurrency)
+        );
         $this->writeDatabase();
     }
     public function showClientWalletStatus(): void
@@ -173,7 +194,7 @@ class Exchange {
         }
 
         $content = array_map(function ($key, $item, $xtrCount): array {
-            return [$key, $item, $xtrCount];
+            return [$key, (string) $item, $xtrCount];
         }, $keys, $this->client->getWallet(), $transactions);
         Ui::showTable($columns, $content, $this->client->getName(), $this->client->getCurrency());
     }
@@ -185,7 +206,7 @@ class Exchange {
         $columns = array_keys(get_object_vars($this->client->getTransactions()[0]));
         $content = array_map(function ($xtr) {
             return [
-                $xtr->timestamp,
+                Carbon::parse($xtr->timestamp),
                 $xtr->act,
                 $xtr->symbol,
                 $xtr->amount,

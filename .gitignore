@@ -1,0 +1,6 @@
+.idea
+.env
+app.log
+test.php
+/vendor/
+/db/*

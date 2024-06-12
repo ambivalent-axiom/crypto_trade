@@ -16,8 +16,11 @@ class Exchange {
     public function __construct() {
         //client initialization
         $this->client = $this->initClient();
+
         $this->db = new JsonDatabase($this->client->jsonSerialize());
         $this->db->connect($this->client->getId());
+
+
         $this->fillClient($this->db->read()[0]);
         //api initialization
         try {

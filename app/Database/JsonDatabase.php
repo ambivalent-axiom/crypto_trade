@@ -1,8 +1,7 @@
 <?php
-namespace Ambax\CryptoTrade\database;
+namespace Ambax\CryptoTrade\Database;
 use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
-use stdClass;
 
 class JsonDatabase implements Database
 {

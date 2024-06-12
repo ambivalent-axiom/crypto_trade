@@ -1,13 +1,15 @@
 <?php
 namespace Ambax\CryptoTrade;
-use Ambax\CryptoTrade\api\CoinMC;
-use Ambax\CryptoTrade\database\JsonDatabase;
+use Ambax\CryptoTrade\Api\Api;
+use Ambax\CryptoTrade\Api\CoinMC;
+use Ambax\CryptoTrade\Database\Database;
+use Ambax\CryptoTrade\Database\JsonDatabase;
 use Carbon\Carbon;
 
 class Exchange {
     private Client $client;
-    private JsonDatabase $db;
-    private CoinMC $exchangeApi;
+    private Database $db;
+    private Api $exchangeApi;
     private string $latestUpdate;
     private array $tableColumns;
     private const DISPLAY_OFFSET = 0;
@@ -21,8 +23,8 @@ class Exchange {
         $this->fillClient($this->db->read()[0]);
         //api initialization
         try {
-            $this->exchangeApi = new CoinMC();
-            $this->latestUpdate = $this->exchangeApi->getLatest();
+            $this->exchangeApi = new CoinMC(1, 100, $this->client->getCurrency());
+            $this->latestUpdate = $this->exchangeApi->get('v1/cryptocurrency/listings/latest');
         } catch (\Exception $e) {
             echo $e->getMessage();
             exit;

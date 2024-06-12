@@ -1,6 +1,6 @@
 <?php
 namespace Ambax\CryptoTrade;
-use Ambax\CryptoTrade\database\JsonDatabase;
+use Ambax\CryptoTrade\Database\JsonDatabase;
 use Carbon\Carbon;
 use Ramsey\Uuid\Uuid;
 

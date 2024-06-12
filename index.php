@@ -3,6 +3,9 @@ require_once "vendor/autoload.php";
 use Ambax\CryptoTrade\Exchange;
 use Ambax\CryptoTrade\Ui;
 
+$dotenv = Dotenv\Dotenv::createUnsafeImmutable(__DIR__);
+$dotenv->load();
+
 $coinMarketCap = new Exchange();
 while(true) {
     $option = Ui::menu('Main Menu');

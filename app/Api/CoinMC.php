@@ -4,11 +4,10 @@ use GuzzleHttp\Client;
 
 class CoinMC implements Api
 {
-    private CLient $client;
-    private string $url;
+    private Client $client;
     private string $params;
     private array $headers;
-    public function __construct(int $start, int $limit, string $convert)
+    public function __construct()
     {
         if (isset($_ENV['COINMC'])) {
             $this->headers = [
@@ -22,11 +21,10 @@ class CoinMC implements Api
             'base_uri' => 'https://pro-api.coinmarketcap.com/',
             'timeout'  => 2.0,
         ]);
-        $this->params = http_build_query([
-            'start' => $start,
-            'limit' => $limit,
-            'convert' => $convert
-        ]);
+    }
+    public function setParams($params)
+    {
+        $this->params = http_build_query($params);
     }
     public function get($method): string
     {

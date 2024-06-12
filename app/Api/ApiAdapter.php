@@ -1,14 +1,13 @@
 <?php
 namespace Ambax\CryptoTrade\Api;
 use Ambax\CryptoTrade\Currency;
-
 class ApiAdapter {
     private const OFFSET = 1;
     private const LIMIT = 100;
     private Api $exchangeApi;
 
-    public function __construct(Api $exchangeApi, $userCurrency) {
-        $this->exchangeApi = $exchangeApi;
+    public function __construct($userCurrency) {
+        $this->exchangeApi = new Paprika();
         $this->exchangeApi->setParams(
             [
                 'start' => self::OFFSET,
@@ -28,7 +27,7 @@ class ApiAdapter {
                 $currencies[] = new Currency(
                     $currency->name,
                     $currency->symbol,
-                    $currency->quote->USD->price
+                    $currency->quote->{$this->userCurrency}->price
                 );
             }
         }
@@ -39,7 +38,7 @@ class ApiAdapter {
                 $currencies[] = new Currency(
                     $currency->name,
                     $currency->symbol,
-                    $currency->quotes->USD->price
+                    $currency->quotes->{$this->userCurrency}->price
                 );
             }
         }

@@ -1,7 +1,6 @@
 <?php
 namespace Ambax\CryptoTrade;
 use Ambax\CryptoTrade\Database\JsonDatabase;
-use Carbon\Carbon;
 use Ramsey\Uuid\Uuid;
 
 class Client implements \JsonSerializable
@@ -12,9 +11,8 @@ class Client implements \JsonSerializable
     private array $wallet;
     private array $transactions;
     private const WALLET_COLUMNS = ['Symbol', 'Amount', 'Transactions'];
-    private const DEFAULT_CURRENCY = 'EUR';
+    private const DEFAULT_CURRENCY = 'USD';
     private const DEFAULT_TIMEZONE = 'Europe/Riga';
-
     public function __construct(
         string $name,
         string $id = null,
@@ -72,7 +70,7 @@ class Client implements \JsonSerializable
         } else {
             $this->wallet[$symbol] = $amount;
         }
-        if($symbol != 'Eur' && $this->wallet[$symbol] == 0) {
+        if($symbol != 'USD' && $this->wallet[$symbol] == 0) {
             unset($this->wallet[$symbol]);
         }
     }
@@ -98,28 +96,29 @@ class Client implements \JsonSerializable
         string $act,
         string $symbol,
         string $cryptoAmount,
-        string $localCurrency): void
+        string $localCurrency,
+        string $id = null,
+        string $timestamp = null
+    ): void
     {
-        $transaction = new \stdClass();
-        $transaction->timestamp = Carbon::now($this->timezone);
-        $transaction->act = $act;
-        $transaction->symbol = $symbol;
-        $transaction->amount = $cryptoAmount;
-        $transaction->currency = $this->currency;
-        $transaction->localCurrency = $localCurrency;
-        $this->transactions[] = $transaction;
+        $this->transactions[] = new Transaction(
+            $this->timezone,
+            $act,
+            $symbol,
+            $cryptoAmount,
+            $localCurrency);
     }
     public function getTransactions(): array
     {
         return $this->transactions;
     }
-    public function setTransactions(array $transactions): void
-    {
-        $this->transactions = $transactions;
-    }
     public function getId(): string
     {
         return $this->id;
+    }
+    public function getDefaultTimezone(): string
+    {
+        return self::DEFAULT_TIMEZONE;
     }
     public static function getClientList(): array
     {

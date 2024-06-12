@@ -1,8 +1,6 @@
 <?php
 namespace Ambax\CryptoTrade;
 use Ambax\CryptoTrade\Api\ApiAdapter;
-use Ambax\CryptoTrade\Api\CoinMC;
-use Ambax\CryptoTrade\Api\Paprika;
 use Ambax\CryptoTrade\Database\Database;
 use Ambax\CryptoTrade\Database\JsonDatabase;
 use Carbon\Carbon;
@@ -23,7 +21,7 @@ class Exchange {
         $this->fillClient($this->db->read()[0]);
         //api initialization
         try {
-            $this->exchangeApi = new ApiAdapter(new Paprika(), $this->client->getCurrency());
+            $this->exchangeApi = new ApiAdapter($this->client->getCurrency());
             $this->latestUpdate = $this->exchangeApi->getLatest();
         } catch (\Exception $e) {
             echo $e->getMessage();
@@ -43,11 +41,11 @@ class Exchange {
     {
         try {
             foreach ($this->fetchLatestUpdate() as $currency) {
-                if ($currency->symbol == $query) {
+                if ($currency->getSymbol() == $query) {
                     return new Currency(
-                        $currency->name,
-                        $currency->symbol,
-                        $currency->price
+                        $currency->getName(),
+                        $currency->getSymbol(),
+                        $currency->getPrice()
                     );
                 }
             }
@@ -89,7 +87,17 @@ class Exchange {
     {
         $this->client->setCurrency($data->currency);
         $this->client->setWallet((array) $data->wallet);
-        $this->client->setTransactions($data->transactions);
+        foreach ($data->transactions as $transaction) {
+            $this->client->addTransaction(
+                    $transaction->act,
+                    $transaction->symbol,
+                    $transaction->amount,
+                    $transaction->localCurrency,
+                    $transaction->id,
+                    $transaction->timestamp
+            );
+        }
+
     }
     private function numberFormat(float $number): string
     {
@@ -103,10 +111,10 @@ class Exchange {
             $limitedData = array_slice($this->fetchLatestUpdate(), self::DISPLAY_OFFSET, self::DISPLAY_LIMIT);
             $rows = array_map(function ($item) {
                 return [
-                    $item->name,
-                    $item->symbol,
+                    $item->getName(),
+                    $item->getSymbol(),
                     number_format(
-                        $item->price,
+                        $item->getPrice(),
                         2,
                         '.',
                         ''),
@@ -122,9 +130,9 @@ class Exchange {
         $coin = $this->searchBySymbol($query);
         if( ! $coin) {return;}
         $coin = [
-            $coin->name,
-            $coin->symbol,
-            number_format($coin->price, 2, '.', ''),
+            $coin->getName(),
+            $coin->getSymbol(),
+            number_format($coin->getPrice(), 2, '.', ''),
         ];
         Ui::showTable($this->tableColumns, [$coin], "Search By $query");
     }
@@ -140,12 +148,12 @@ class Exchange {
         if( ! Ui::question("Are you sure you want to proceed with order?")) {
             throw new \Exception('Action aborted ' . $symbol . "\n");
         }
-        $boughtAmount = $cost/$currency->price;
+        $boughtAmount = $cost/$currency->getPrice();
         $this->client->takeFromWallet($this->client->getCurrency(), $cost);
-        $this->client->addToWallet($currency->symbol, $boughtAmount);
+        $this->client->addToWallet($currency->getSymbol(), $boughtAmount);
         $this->client->addTransaction(
             'Buy',
-            $currency->symbol,
+            $currency->getSymbol(),
             $this->numberFormat($boughtAmount),
             $this->numberFormat($cost)
         );
@@ -173,7 +181,7 @@ class Exchange {
             "?")) {
             return;
         }
-        $inClientCurrency = $amount * $currency->price;
+        $inClientCurrency = $amount * $currency->getPrice();
         $this->client->takeFromWallet($symbol, $amount);
         $this->client->addToWallet($this->client->getCurrency(), $inClientCurrency);
         $this->client->addTransaction(
@@ -206,18 +214,17 @@ class Exchange {
         if (empty($this->client->getTransactions())) {
             throw new \Exception('Could not find transaction history for ' . $this->client->getName() . "\n");
         }
-        $columns = array_keys(get_object_vars($this->client->getTransactions()[0]));
         $content = array_map(function ($xtr) {
             return [
-                Carbon::parse($xtr->timestamp),
-                $xtr->act,
-                $xtr->symbol,
-                $xtr->amount,
-                $xtr->currency,
-                $xtr->localCurrency
+                $xtr->getId(),
+                $xtr->getTimestamp(),
+                $xtr->getAct(),
+                $this->numberFormat($xtr->getAmount()),
+                $xtr->getSymbol(),
+                $xtr->getLocalCurrency()
             ];
         }, $this->client->getTransactions());
-        Ui::showTable($columns, $content, $this->client->getName(), "Transaction History");
+        Ui::showTable(Transaction::getColumns(), $content, $this->client->getName(), "Transaction History");
     }
     public function writeDatabase(): void
     {

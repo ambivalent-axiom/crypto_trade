@@ -176,10 +176,7 @@ class Exchange {
             return;
         }
         $inClientCurrency = $amount * $currency->getPrice();
-
         $this->client->takeFromWallet($symbol, $amount);
-
-
         $this->client->addToWallet($this->client->getCurrency(), $inClientCurrency);
         $this->db->insertTransaction(
             $this->client->getId(),
@@ -228,9 +225,9 @@ class Exchange {
             return [
                 $xtr['timestamp'],
                 $xtr['act'],
-                $xtr['amount'],
+                $this->numberFormat($xtr['amount']),
                 $xtr['symbol'],
-                $xtr['localCurrency']
+                $this->numberFormat($xtr['localCurrency'])
             ];
         }, $transactions);
         Ui::showTable($columns, $content, $this->client->getName(), "Transaction History");

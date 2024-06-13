@@ -1,43 +1,27 @@
 <?php
 namespace Ambax\CryptoTrade;
-use Ambax\CryptoTrade\Database\JsonDatabase;
+use Ambax\CryptoTrade\Database\SqLite;
 use Ramsey\Uuid\Uuid;
 
-class Client implements \JsonSerializable
+class Client
 {
     private string $name;
     private string $id;
     private string $currency;
-    private array $wallet;
-    private array $transactions;
     private const WALLET_COLUMNS = ['Symbol', 'Amount', 'Transactions'];
     private const DEFAULT_CURRENCY = 'USD';
     private const DEFAULT_TIMEZONE = 'Europe/Riga';
     public function __construct(
         string $name,
+        SqLite $sqLite,
         string $id = null,
-        string $currency = Null,
-        array $wallet = Null,
-        array $transactions = null,
-        string $timezone = null
+        string $currency = Null
     )
     {
         $this->name = $name;
+        $this->db = $sqLite;
         $this->id = $id ?? Uuid::uuid4()->toString();
         $this->currency = $currency ?? self::DEFAULT_CURRENCY;
-        $this->wallet = $wallet ?? [$this->currency => 1000];
-        $this->transactions = $transactions ?? [];
-        $this->timezone = $timezone ?? self::DEFAULT_TIMEZONE;
-    }
-    public function jsonSerialize()
-    {
-        return [[
-            'id' => $this->id,
-            'name' => $this->name,
-            'currency' => $this->currency,
-            'wallet' => $this->wallet,
-            'transactions' => $this->transactions
-        ]];
     }
     public function getName(): string
     {
@@ -47,70 +31,51 @@ class Client implements \JsonSerializable
     {
         return $this->currency;
     }
-    public function setCurrency(string $currency): void
-    {
-        $this->currency = $currency;
-    }
-    public function setWallet(array $wallet): void
-    {
-        $this->wallet = $wallet;
-    }
     public function addToWallet(string $symbol, float $amount): void
     {
-        if(isset($this->wallet[$symbol])) {
-            $this->wallet[$symbol] += $amount;
+        $currentAmount = $this->db->selectAmountByCurrency($this->getId(), $symbol);
+        if(isset($currentAmount)) {
+            $amount = $currentAmount + $amount;
+            $this->db->updateWallet($this->getId(), $symbol, $amount);
         } else {
-            $this->wallet[$symbol] = $amount;
+            $this->db->addToWallet($this->getId(), $symbol, $amount);
         }
     }
     public function takeFromWallet(string $symbol, float $amount): void
     {
-        if(isset($this->wallet[$symbol])) {
-            $this->wallet[$symbol] -= $amount;
-        } else {
-            $this->wallet[$symbol] = $amount;
+        $oldAmount = $this->db->selectAmountByCurrency($this->getId(), $symbol);
+        $newAmount = $oldAmount - $amount;
+        if($symbol != 'USD' && $newAmount == 0) {
+            $this->db->deleteFromWallet($this->getId(), $symbol);
         }
-        if($symbol != 'USD' && $this->wallet[$symbol] == 0) {
-            unset($this->wallet[$symbol]);
-        }
+        $this->db->updateWallet($this->getId(), $symbol, $newAmount);
     }
-    public function getWalletCurrencies(): array
+    public function getWalletCurrencies(): array// of keys - strings
     {
-        $wallet = array_keys($this->wallet);
-        unset($wallet[array_search($this->currency, $wallet)]);
-        return $wallet;
+        $keys = [];
+        foreach ($this->db->selectUserWallet($this->getId()) as $currency) {
+            $keys[] = $currency['currency'];
+        }
+        unset($keys[array_search($this->currency, $keys)]);
+        return $keys;
     }
     public function getCurrencyAmount(string $symbol): float
     {
-        return $this->wallet[$symbol] ?? 0;
+        $wallet = $this->db->selectUserWallet($this->getId());
+        foreach ($wallet as $currency) {
+            if ($currency['currency'] == $symbol) {
+                return $currency['amount'];
+            }
+        }
+        return 0;
     }
     public function getWallet(): array
     {
-        return $this->wallet;
+        return $this->db->selectUserWallet($this->getId());
     }
     public function getWalletColumns(): array
     {
         return self::WALLET_COLUMNS;
-    }
-    public function addTransaction(
-        string $act,
-        string $symbol,
-        string $cryptoAmount,
-        string $localCurrency,
-        string $id = null,
-        string $timestamp = null
-    ): void
-    {
-        $this->transactions[] = new Transaction(
-            $this->timezone,
-            $act,
-            $symbol,
-            $cryptoAmount,
-            $localCurrency);
-    }
-    public function getTransactions(): array
-    {
-        return $this->transactions;
     }
     public function getId(): string
     {
@@ -120,16 +85,13 @@ class Client implements \JsonSerializable
     {
         return self::DEFAULT_TIMEZONE;
     }
-    public static function getClientList(): array
+    public static function getClientList(array $users): array
     {
-        $clients = [];
-        if ($files = glob(JsonDatabase::DB_DIR . "*"))
-        {
-            foreach ($files as $client) {
-                $client = json_decode(file_get_contents($client))[0];
-                $clients[$client->name] = $client->id;
-            }
-        }
-        return $clients;
+        return array_map(function ($user) {
+            return [
+                'name' => $user['name'],
+                'id' => $user['id']
+            ];
+        }, $users);
     }
 }

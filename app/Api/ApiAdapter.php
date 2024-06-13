@@ -3,11 +3,11 @@ namespace Ambax\CryptoTrade\Api;
 use Ambax\CryptoTrade\Currency;
 class ApiAdapter {
     private const OFFSET = 1;
-    private const LIMIT = 100;
+    private const LIMIT = 10;
     private Api $exchangeApi;
 
     public function __construct($userCurrency) {
-        $this->exchangeApi = new Paprika();
+        $this->exchangeApi = new CoinMC();
         $this->exchangeApi->setParams(
             [
                 'start' => self::OFFSET,

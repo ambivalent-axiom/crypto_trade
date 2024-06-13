@@ -89,7 +89,7 @@ class Exchange {
         }
         $user = new Client(readline('Enter your name: '), $this->db);
         $this->db->createUser($user->getId(), $user->getName(), $user->getCurrency());
-        $this->db->addToWallet($user->getId(), $user->getCurrency(), $user->getCurrencyAmount($user->getCurrency()));
+        $this->db->addToWallet($user->getId(), $user->getCurrency(), Client::getDefaultWallet());
         return $user;
     }
     private function numberFormat(float $number): string
@@ -178,9 +178,9 @@ class Exchange {
         $inClientCurrency = $amount * $currency->getPrice();
 
         $this->client->takeFromWallet($symbol, $amount);
+
+
         $this->client->addToWallet($this->client->getCurrency(), $inClientCurrency);
-
-
         $this->db->insertTransaction(
             $this->client->getId(),
             Carbon::now($this->client->getDefaultTimezone())->toDateTimeString(),

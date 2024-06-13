@@ -10,6 +10,7 @@ class Client
     private string $currency;
     private const WALLET_COLUMNS = ['Symbol', 'Amount', 'Transactions'];
     private const DEFAULT_CURRENCY = 'USD';
+    private const DEFAULT_WALLET = 1000;
     private const DEFAULT_TIMEZONE = 'Europe/Riga';
     public function __construct(
         string $name,
@@ -34,7 +35,9 @@ class Client
     public function addToWallet(string $symbol, float $amount): void
     {
         $currentAmount = $this->db->selectAmountByCurrency($this->getId(), $symbol);
-        if(isset($currentAmount)) {
+        $currencies = $this->getWalletCurrencies();
+        $currencies[] = $this->currency;
+        if(in_array($symbol, $currencies)) {
             $amount = $currentAmount + $amount;
             $this->db->updateWallet($this->getId(), $symbol, $amount);
         } else {
@@ -81,9 +84,13 @@ class Client
     {
         return $this->id;
     }
-    public function getDefaultTimezone(): string
+    public static function getDefaultTimezone(): string
     {
         return self::DEFAULT_TIMEZONE;
+    }
+    public static function getDefaultWallet(): string
+    {
+        return self::DEFAULT_WALLET;
     }
     public static function getClientList(array $users): array
     {

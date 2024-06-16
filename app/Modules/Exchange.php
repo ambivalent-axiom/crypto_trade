@@ -1,13 +1,14 @@
 <?php
-namespace Ambax\CryptoTrade;
-use Ambax\CryptoTrade\Api\ApiAdapter;
-use Ambax\CryptoTrade\Database\SqLite;
+namespace Ambax\CryptoTrade\Modules;
+use Ambax\CryptoTrade\Clients\ApiAdapter;
+use Ambax\CryptoTrade\Services\SqLite;
 use Carbon\Carbon;
 
 class Exchange {
-    private Client $client;
+    private User $user;
+    private array $users;
     private SqLite $db;
-    private array $latestUpdate; //array of objects
+    private array $latestUpdate; //array of Currency objects
     private array $tableColumns;
     private const DISPLAY_OFFSET = 0;
     private const DISPLAY_LIMIT = 10;
@@ -15,17 +16,18 @@ class Exchange {
     public function __construct() {
         //client initialization
         $this->db = new SqLite('database.sqlite');
-        $this->client = $this->initClient();
+        $this->users = $this->db->selectAllUsers();
+        $this->user = $this->initUser();
         //api initialization
         try {
-            $this->exchangeApi = new ApiAdapter($this->client->getCurrency());
+            $this->exchangeApi = new ApiAdapter($this->user->getCurrency());
             $this->latestUpdate = $this->exchangeApi->getLatest();
         } catch (\Exception $e) {
             echo $e->getMessage();
             exit;
         }
         //other stuff
-        $this->tableColumns = ['Name', 'Symbol', 'Price ' . $this->client->getCurrency()];
+        $this->tableColumns = ['Name', 'Symbol', 'Price ' . $this->user->getCurrency()];
     }
     private function fetchLatestUpdate(): array
     {
@@ -56,9 +58,9 @@ class Exchange {
         while(true) {
             $amount = readline("Enter amount or empty for all: ");
             if ($amount == '') {
-                return $this->client->getCurrencyAmount($symbol);
+                return $this->user->getCurrencyAmount($symbol);
             }
-            if (is_numeric($amount) && $this->client->getCurrencyAmount($symbol) < $amount) {
+            if (is_numeric($amount) && $this->user->getCurrencyAmount($symbol) < $amount) {
                 echo "You are unable to cover this transaction!\n";
                 continue;
             }
@@ -67,29 +69,28 @@ class Exchange {
             }
         }
     }
-    private function initClient(): Client
+    private function initUser(): User
     {
-        if($list = Client::getClientList($this->db->selectAllUsers()))
+        if($this->users)
         {
-            $keys = [];
-            foreach ($list as $item) {
-                $keys[] = $item['name'];
+            $keys = ['new'];
+            foreach ($this->users as $user) {
+                array_unshift($keys, $user->getName());
             }
-            $keys[] = 'new';
             $key = Ui::menu('Select the client: ', $keys);
-            foreach ($list as $user) {
-                if ($user['name'] === $key) {
-                    $id = $user['id'];
+            foreach ($this->users as $user) {
+                if ($user->getName() === $key) {
+                    $id = $user->getId();
                 }
             }
             if ($key !== 'new') {
-                $user = new Client($key, $this->db, $id);
+                $user = new User($key, $this->db, $id);
                 return $user;
             }
         }
-        $user = new Client(readline('Enter your name: '), $this->db);
+        $user = new User(readline('Enter your name: '), $this->db);
         $this->db->createUser($user->getId(), $user->getName(), $user->getCurrency());
-        $this->db->addToWallet($user->getId(), $user->getCurrency(), Client::getDefaultWallet());
+        $this->db->addToWallet($user->getId(), $user->getCurrency(), User::getDefaultWallet());
         return $user;
     }
     private function numberFormat(float $number): string
@@ -136,19 +137,19 @@ class Exchange {
             throw new \Exception('Could not find symbol ' . $symbol . "\n");
         }
         if($cost > $this->db->selectAmountByCurrency(
-            $this->client->getId(), $this->client->getCurrency())) {
+            $this->user->getId(), $this->user->getCurrency())) {
             throw new \Exception('Insufficient wallet balance for this transaction!' . "\n");
         }
         if( ! Ui::question("Are you sure you want to proceed with order?")) {
             throw new \Exception('Action aborted ' . $symbol . "\n");
         }
         $boughtAmount = $cost/$currency->getPrice();
-        $this->client->takeFromWallet($this->client->getCurrency(), $cost);
+        $this->user->takeFromWallet($this->user->getCurrency(), $cost);
 
-        $this->client->addToWallet($currency->getSymbol(), $boughtAmount);
+        $this->user->addToWallet($currency->getSymbol(), $boughtAmount);
         $this->db->insertTransaction(
-            $this->client->getId(),
-            Carbon::now($this->client->getDefaultTimezone())->toDateTimeString(),
+            $this->user->getId(),
+            Carbon::now($this->user->getDefaultTimezone())->toDateTimeString(),
             'Buy',
             $boughtAmount,
             $symbol,
@@ -157,14 +158,14 @@ class Exchange {
     }
     public function sell(): void
     {
-        $options = $this->client->getWalletCurrencies();
+        $options = $this->user->getWalletCurrencies();
         try {
             $symbol = strtoupper(Ui::menu('Select currency to sell: ', $options));
         } catch (\Exception $e) {
             echo $e->getMessage() . "\n";
             return;
         }
-        echo "In wallet: " . $this->client->getCurrencyAmount($symbol) . "\n";
+        echo "In wallet: " . $this->user->getCurrencyAmount($symbol) . "\n";
         $amount = $this->chooseAmount($symbol);
         $currency = $this->searchBySymbol($symbol);
         if(empty($currency)) {return;}
@@ -176,11 +177,11 @@ class Exchange {
             return;
         }
         $inClientCurrency = $amount * $currency->getPrice();
-        $this->client->takeFromWallet($symbol, $amount);
-        $this->client->addToWallet($this->client->getCurrency(), $inClientCurrency);
+        $this->user->takeFromWallet($symbol, $amount);
+        $this->user->addToWallet($this->user->getCurrency(), $inClientCurrency);
         $this->db->insertTransaction(
-            $this->client->getId(),
-            Carbon::now($this->client->getDefaultTimezone())->toDateTimeString(),
+            $this->user->getId(),
+            Carbon::now($this->user->getDefaultTimezone())->toDateTimeString(),
             'Sell',
             $amount,
             $symbol,
@@ -189,15 +190,15 @@ class Exchange {
     }
     public function showClientWalletStatus(): void
     {
-        $wallet = $this->db->selectUserWallet($this->client->getId());
-        $columns = $this->client->getWalletColumns();
+        $wallet = $this->db->selectUserWallet($this->user->getId());
+        $columns = $this->user->getWalletColumns();
         $keys = [];
         foreach ($wallet as $item) {
             $keys[] = $item['currency'];
         }
         $xtrCount = [];
         foreach ($keys as $key) {
-            $xtrCount[] = [$key => count($this->db->selectTransactionsBySymbol($this->client->getId(), $key))];
+            $xtrCount[] = [$key => count($this->db->selectTransactionsBySymbol($this->user->getId(), $key))];
         }
         $content = [];
         foreach ($wallet as $index => $currency) {
@@ -206,30 +207,23 @@ class Exchange {
             $count = $xtrCount[$index][$key];
             $content[] = [$key, $sum, $count];
         }
-        Ui::showTable($columns, $content, $this->client->getName(), $this->client->getCurrency());
+        Ui::showTable($columns, $content, $this->user->getName(), $this->user->getCurrency());
     }
     public function showTransactionHistory(): void
     {
-        $transactions = $this->db->selectAllTransactions($this->client->getId());
+        $transactions = $this->db->selectAllTransactions($this->user->getId());
         if (empty($transactions)) {
-            throw new \Exception('Could not find transaction history for ' . $this->client->getName() . "\n");
+            throw new \Exception('Could not find transaction history for ' . $this->user->getName() . "\n");
         }
-        $columns = [
-            'timestamp',
-            'act',
-            'amount',
-            'symbol',
-            'localCurrency'
-        ];
         $content = array_map(function ($xtr) {
             return [
-                $xtr['timestamp'],
-                $xtr['act'],
-                $this->numberFormat($xtr['amount']),
-                $xtr['symbol'],
-                $this->numberFormat($xtr['localCurrency'])
+                $xtr->getTimestamp(),
+                $xtr->getAct(),
+                $this->numberFormat($xtr->getAmount()),
+                $xtr->getSymbol(),
+                $this->numberFormat($xtr->getLocalCurrency())
             ];
         }, $transactions);
-        Ui::showTable($columns, $content, $this->client->getName(), "Transaction History");
+        Ui::showTable(Transaction::getColumns(), $content, $this->user->getName(), "Transaction History");
     }
 }

@@ -1,12 +1,12 @@
 <?php
-namespace Ambax\CryptoTrade;
+namespace Ambax\CryptoTrade\Modules;
 
-use Symfony\Component\Console\Output\ConsoleOutput;
 use Symfony\Component\Console\Helper\QuestionHelper;
+use Symfony\Component\Console\Helper\Table;
+use Symfony\Component\Console\Input\ArgvInput;
+use Symfony\Component\Console\Output\ConsoleOutput;
 use Symfony\Component\Console\Question\ChoiceQuestion;
 use Symfony\Component\Console\Question\ConfirmationQuestion;
-use Symfony\Component\Console\Input\ArgvInput;
-use Symfony\Component\Console\Helper\Table;
 
 class Ui
 {

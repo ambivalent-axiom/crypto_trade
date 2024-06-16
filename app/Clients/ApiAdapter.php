@@ -1,6 +1,7 @@
 <?php
-namespace Ambax\CryptoTrade\Api;
-use Ambax\CryptoTrade\Currency;
+namespace Ambax\CryptoTrade\Clients;
+use Ambax\CryptoTrade\Modules\Currency;
+
 class ApiAdapter {
     private const OFFSET = 1;
     private const LIMIT = 10;

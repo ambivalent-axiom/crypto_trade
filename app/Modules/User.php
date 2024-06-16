@@ -1,9 +1,9 @@
 <?php
-namespace Ambax\CryptoTrade;
-use Ambax\CryptoTrade\Database\SqLite;
+namespace Ambax\CryptoTrade\Modules;
+use Ambax\CryptoTrade\Services\SqLite;
 use Ramsey\Uuid\Uuid;
 
-class Client
+class User
 {
     private string $name;
     private string $id;
@@ -91,14 +91,5 @@ class Client
     public static function getDefaultWallet(): string
     {
         return self::DEFAULT_WALLET;
-    }
-    public static function getClientList(array $users): array
-    {
-        return array_map(function ($user) {
-            return [
-                'name' => $user['name'],
-                'id' => $user['id']
-            ];
-        }, $users);
     }
 }

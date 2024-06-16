@@ -1,5 +1,5 @@
 <?php
-namespace Ambax\CryptoTrade\Api;
+namespace Ambax\CryptoTrade\Clients;
 use GuzzleHttp\Client;
 
 class Paprika implements Api

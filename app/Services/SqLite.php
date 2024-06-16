@@ -1,8 +1,10 @@
 <?php
-namespace Ambax\CryptoTrade\Database;
-use SQLite3;
+namespace Ambax\CryptoTrade\Services;
+use Ambax\CryptoTrade\Modules\Transaction;
+use Ambax\CryptoTrade\Modules\User;
 use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
+use SQLite3;
 
 class SqLite
 {
@@ -25,18 +27,14 @@ class SqLite
     }
     public function selectAllUsers(): array
     {
+        $this->logger->info('Select all users');
         $users = [];
         $query = 'SELECT * FROM users';
         $result = $this->sqlite->query($query);
         while($row = $result->fetchArray(SQLITE3_ASSOC))
         {
-            $users[] = [
-                'id' => $row['id'],
-                'name' => $row['name'],
-                'currency' => $row['currency']
-            ];
+            $users[] = new User($row['name'], $this, $row['id'], $row['currency']);
         }
-        $this->logger->info('Select all users');
         return $users;
     }
 //WALLET
@@ -109,20 +107,21 @@ class SqLite
     }
     public function selectAllTransactions(string $id): array
     {
+        $this->logger->info('selectAllTransactions');
         $transactions = [];
         $query = "SELECT * FROM transactions WHERE id = '$id' ORDER BY timestamp DESC";
         $result = $this->sqlite->query($query);
         while($row = $result->fetchArray(SQLITE3_ASSOC))
         {
-            $transactions[] = [
-                'timestamp' => $row['timestamp'],
-                'act' => $row['act'],
-                'amount' => $row['amount'],
-                'symbol' => $row['symbol'],
-                'localCurrency' => $row['localCurrency']
-            ];
+            $transactions[] = new Transaction(
+                    $row['act'],
+                    $row['symbol'],
+                    $row['amount'],
+                    $row['localCurrency'],
+                    $row['id'],
+                    $row['timestamp']
+                );
         }
-        $this->logger->info('selectAllTransactions');
         return $transactions;
     }
     public function selectTransactionsBySymbol(string $id, string $symbol): array
@@ -132,13 +131,14 @@ class SqLite
         $result = $this->sqlite->query($query);
         while($row = $result->fetchArray(SQLITE3_ASSOC))
         {
-            $transactions[] = [
-                'timestamp' => $row['timestamp'],
-                'act' => $row['act'],
-                'amount' => $row['amount'],
-                'symbol' => $row['symbol'],
-                'localCurrency' => $row['localCurrency']
-            ];
+            $transactions[] = new Transaction(
+                $row['act'],
+                $row['symbol'],
+                $row['amount'],
+                $row['localCurrency'],
+                $row['id'],
+                $row['timestamp']
+            );
         }
         $this->logger->info('selectTransactionsBySymbol');
         return $transactions;

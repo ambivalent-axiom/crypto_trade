@@ -1,5 +1,5 @@
 <?php
-namespace Ambax\CryptoTrade;
+namespace Ambax\CryptoTrade\Modules;
 class Currency
 {
     private string $name;

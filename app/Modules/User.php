@@ -2,6 +2,7 @@
 namespace Ambax\CryptoTrade\Modules;
 use Ambax\CryptoTrade\Services\SqLite;
 use Ramsey\Uuid\Uuid;
+use Carbon\Carbon;
 
 class User
 {
@@ -43,7 +44,7 @@ class User
             $amount = $currentAmount + $amount;
             $this->db->updateWallet($this->getId(), $symbol, $amount);
         } else {
-            $this->db->addToWallet($this->getId(), $symbol, $amount);
+            $this->db->addToWallet($this->getId(), $symbol, $amount, Carbon::now()->toDateTimeString());
         }
     }
     public function takeFromWallet(string $symbol, float $amount): void
@@ -74,18 +75,9 @@ class User
         }
         return 0;
     }
-
     public function getId(): string
     {
         return $this->id;
-    }
-    public static function getDefaultTimezone(): string
-    {
-        return self::DEFAULT_TIMEZONE;
-    }
-    public static function getDefaultWallet(): string
-    {
-        return self::DEFAULT_WALLET;
     }
     public function setPassword(string $password): void
     {
@@ -100,4 +92,13 @@ class User
     {
         return md5($password) == $this->getPassword();
     }
+    public static function getDefaultTimezone(): string
+    {
+        return self::DEFAULT_TIMEZONE;
+    }
+    public static function getDefaultWallet(): string
+    {
+        return self::DEFAULT_WALLET;
+    }
+
 }

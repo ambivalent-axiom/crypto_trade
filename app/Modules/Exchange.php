@@ -98,8 +98,17 @@ class Exchange {
         }
         $user = new User(readline('Enter your name: '), $this->db);
         $user->setPassword(readline('Create your password: '));
-        $this->db->createUser($user->getId(), $user->getName(), $user->getCurrency());
-        $this->db->addToWallet($user->getId(), $user->getCurrency(), User::getDefaultWallet());
+        $this->db->createUser(
+            $user->getId(),
+            $user->getName(),
+            $user->getCurrency()
+        );
+        $this->db->addToWallet(
+            $user->getId(),
+            $user->getCurrency(),
+            User::getDefaultWallet(),
+            Carbon::now()->toDateTimeString()
+        );
         return $user;
     }
     private function numberFormat(float $number): string
@@ -204,8 +213,10 @@ class Exchange {
         foreach ($wallet->getPortfolio() as $key => $amount) {
             $content[] = [
                 $key,
-                $amount,
-                count($this->db->selectTransactionsBySymbol($this->user->getId(), $key))];
+                $this->numberFormat($amount),
+                count($this->db->selectTransactionsBySymbol($this->user->getId(), $key)),
+                $key == 'USD' ? "NaN" : number_format($this->calcProfit($key), 2, '.', '') . "%"
+            ];
         }
         Ui::showTable(Wallet::getWalletColumns(), $content, $this->user->getName(), $this->user->getCurrency());
     }
@@ -225,5 +236,18 @@ class Exchange {
             ];
         }, $transactions);
         Ui::showTable(Transaction::getColumns(), $content, $this->user->getName(), "Transaction History");
+    }
+    public function calcProfit($currency): float
+    {
+        $averageBuy = $this->db->selectAvgPrice(
+            $this->user->getId(),
+            $currency,
+            $this->db->selectCurrencySince(
+                $this->user->getId(),
+                $currency
+            )
+        );
+        $currentPrice = $this->searchBySymbol($currency);
+        return (($currentPrice->getPrice() - $averageBuy)/$averageBuy) * 100;
     }
 }

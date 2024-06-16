@@ -5,7 +5,7 @@ class Wallet
 {
     private string $id;
     private array $portfolio;
-    private const WALLET_COLUMNS = ['Symbol', 'Amount', 'Transactions'];
+    private const WALLET_COLUMNS = ['Symbol', 'Amount', 'Transactions', 'Profit'];
 
     public function __construct($id)
     {

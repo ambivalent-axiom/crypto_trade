@@ -49,12 +49,25 @@ class SqLite
         return $users;
     }
 //WALLET
-    public function addToWallet(string $id, string $currency, float $amount): void
+    public function addToWallet(
+        string $id,
+        string $currency,
+        float $amount,
+        string $since
+    ): void
     {
-        $query = "INSERT INTO wallets (id, currency, amount)" .
-            "VALUES ('$id', '$currency', $amount)";
+        $query = "INSERT INTO wallets (id, currency, amount, since)" .
+            "VALUES ('$id', '$currency', $amount, '$since')";
         $this->sqlite->exec($query);
         $this->logger->info('Add to wallet exec');
+    }
+    public function selectAvgPrice(string $id, string $currency, string $since): float
+    {
+        $query = "SELECT AVG(amount) AS avg_amnt, AVG(localCurrency) AS avg_local " .
+            "FROM transactions WHERE id='$id' AND act='Buy' AND symbol='$currency' AND timestamp >= '$since'";
+        $result = $this->sqlite->query($query);
+        $result = $result->fetchArray(SQLITE3_ASSOC);
+        return $result['avg_local']/$result['avg_amnt'];
     }
     public function selectUserWallet(string $id): Wallet
     {
@@ -85,6 +98,14 @@ class SqLite
             return $amount;
         }
         return null;
+    }
+    public function selectCurrencySince(string $id, string $currency): string
+    {
+        $this->logger->info('selectCurrencySince');
+        $query = "SELECT * FROM wallets WHERE id = '$id' AND currency = '$currency'";
+        $result = $this->sqlite->query($query);
+        $since  = $result->fetchArray(SQLITE3_ASSOC);
+        return $since['since'];
     }
     public function updateWallet(string $id, string $currency, float $amount): void
     {

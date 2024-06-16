@@ -2,6 +2,7 @@
 namespace Ambax\CryptoTrade\Services;
 use Ambax\CryptoTrade\Modules\Transaction;
 use Ambax\CryptoTrade\Modules\User;
+use Ambax\CryptoTrade\Modules\Wallet;
 use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
 use SQLite3;
@@ -45,17 +46,14 @@ class SqLite
         $this->sqlite->exec($query);
         $this->logger->info('Add to wallet exec');
     }
-    public function selectUserWallet(string $id): array
+    public function selectUserWallet(string $id): Wallet
     {
-        $wallet = [];
         $query = "SELECT * FROM wallets WHERE id = '$id'";
         $result = $this->sqlite->query($query);
+        $wallet = new Wallet($id);
         while ($row = $result->fetchArray(SQLITE3_ASSOC))
         {
-            $wallet [] = [
-                'currency' => $row['currency'],
-                'amount' => $row['amount']
-            ];
+            $wallet->addPortfolio($row['currency'], $row['amount']);
         }
         $this->logger->info('Select user wallet');
         return $wallet;

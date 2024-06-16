@@ -8,7 +8,6 @@ class User
     private string $name;
     private string $id;
     private string $currency;
-    private const WALLET_COLUMNS = ['Symbol', 'Amount', 'Transactions'];
     private const DEFAULT_CURRENCY = 'USD';
     private const DEFAULT_WALLET = 1000;
     private const DEFAULT_TIMEZONE = 'Europe/Riga';
@@ -72,14 +71,7 @@ class User
         }
         return 0;
     }
-    public function getWallet(): array
-    {
-        return $this->db->selectUserWallet($this->getId());
-    }
-    public function getWalletColumns(): array
-    {
-        return self::WALLET_COLUMNS;
-    }
+
     public function getId(): string
     {
         return $this->id;

@@ -191,23 +191,14 @@ class Exchange {
     public function showClientWalletStatus(): void
     {
         $wallet = $this->db->selectUserWallet($this->user->getId());
-        $columns = $this->user->getWalletColumns();
-        $keys = [];
-        foreach ($wallet as $item) {
-            $keys[] = $item['currency'];
-        }
-        $xtrCount = [];
-        foreach ($keys as $key) {
-            $xtrCount[] = [$key => count($this->db->selectTransactionsBySymbol($this->user->getId(), $key))];
-        }
         $content = [];
-        foreach ($wallet as $index => $currency) {
-            $key = $keys[$index];
-            $sum = $currency['amount'];
-            $count = $xtrCount[$index][$key];
-            $content[] = [$key, $sum, $count];
+        foreach ($wallet->getPortfolio() as $key => $amount) {
+            $content[] = [
+                $key,
+                $amount,
+                count($this->db->selectTransactionsBySymbol($this->user->getId(), $key))];
         }
-        Ui::showTable($columns, $content, $this->user->getName(), $this->user->getCurrency());
+        Ui::showTable(Wallet::getWalletColumns(), $content, $this->user->getName(), $this->user->getCurrency());
     }
     public function showTransactionHistory(): void
     {

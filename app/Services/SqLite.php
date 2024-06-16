@@ -21,10 +21,15 @@ class SqLite
         string $name,
         string $currency): void
     {
+        $this->logger->info('Create User');
         $query = "INSERT INTO users (id, name, currency)" .
             "VALUES ('$id', '$name', '$currency')";
         $this->sqlite->exec($query);
-        $this->logger->info('Create USer');
+    }
+    public function setUserPass(string $id, string $pass): void
+    {
+        $query = "UPDATE users SET password = '$pass' WHERE id = '$id'";
+        $this->sqlite->exec($query);
     }
     public function selectAllUsers(): array
     {
@@ -34,7 +39,12 @@ class SqLite
         $result = $this->sqlite->query($query);
         while($row = $result->fetchArray(SQLITE3_ASSOC))
         {
-            $users[] = new User($row['name'], $this, $row['id'], $row['currency']);
+            $users[] = new User(
+                $row['name'],
+                $this, $row['id'],
+                $row['currency'],
+                $row['password']
+            );
         }
         return $users;
     }

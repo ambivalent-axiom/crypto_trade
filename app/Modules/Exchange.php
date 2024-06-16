@@ -80,7 +80,15 @@ class Exchange {
             $key = Ui::menu('Select the client: ', $keys);
             foreach ($this->users as $user) {
                 if ($user->getName() === $key) {
-                    $id = $user->getId();
+                    if(empty($user->getPassword()))
+                    {
+                        $user->setPassword(readline("Create a password for this user: "));
+                    }
+                    if ($user->login(readline('Enter your password: '))) {
+                        $id = $user->getId();
+                    } else {
+                        throw new \Exception("Authentication failed, wrong password!\n");
+                    }
                 }
             }
             if ($key !== 'new') {
@@ -89,6 +97,7 @@ class Exchange {
             }
         }
         $user = new User(readline('Enter your name: '), $this->db);
+        $user->setPassword(readline('Create your password: '));
         $this->db->createUser($user->getId(), $user->getName(), $user->getCurrency());
         $this->db->addToWallet($user->getId(), $user->getCurrency(), User::getDefaultWallet());
         return $user;

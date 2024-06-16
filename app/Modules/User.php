@@ -7,6 +7,7 @@ class User
 {
     private string $name;
     private string $id;
+    private string $password;
     private string $currency;
     private const DEFAULT_CURRENCY = 'USD';
     private const DEFAULT_WALLET = 1000;
@@ -15,13 +16,15 @@ class User
         string $name,
         SqLite $sqLite,
         string $id = null,
-        string $currency = Null
+        string $currency = Null,
+        string $password = null
     )
     {
         $this->name = $name;
         $this->db = $sqLite;
         $this->id = $id ?? Uuid::uuid4()->toString();
         $this->currency = $currency ?? self::DEFAULT_CURRENCY;
+        $this->password = $password ?? '';
     }
     public function getName(): string
     {
@@ -83,5 +86,18 @@ class User
     public static function getDefaultWallet(): string
     {
         return self::DEFAULT_WALLET;
+    }
+    public function setPassword(string $password): void
+    {
+        $this->password = md5($password);
+        $this->db->setUserPass($this->getId(), $this->getPassword());
+    }
+    public function getPassword(): string
+    {
+        return $this->password;
+    }
+    public function login($password): bool
+    {
+        return md5($password) == $this->getPassword();
     }
 }

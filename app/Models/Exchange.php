@@ -1,5 +1,5 @@
 <?php
-namespace Ambax\CryptoTrade\Modules;
+namespace Ambax\CryptoTrade\Models;
 use Ambax\CryptoTrade\Clients\ApiAdapter;
 use Ambax\CryptoTrade\Services\SqLite;
 use Carbon\Carbon;

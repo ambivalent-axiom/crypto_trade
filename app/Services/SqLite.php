@@ -1,8 +1,8 @@
 <?php
 namespace Ambax\CryptoTrade\Services;
-use Ambax\CryptoTrade\Modules\Transaction;
-use Ambax\CryptoTrade\Modules\User;
-use Ambax\CryptoTrade\Modules\Wallet;
+use Ambax\CryptoTrade\Models\Transaction;
+use Ambax\CryptoTrade\Models\User;
+use Ambax\CryptoTrade\Models\Wallet;
 use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
 use SQLite3;

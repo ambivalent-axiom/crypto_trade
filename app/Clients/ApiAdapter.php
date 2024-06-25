@@ -1,6 +1,6 @@
 <?php
 namespace Ambax\CryptoTrade\Clients;
-use Ambax\CryptoTrade\Modules\Currency;
+use Ambax\CryptoTrade\Models\Currency;
 
 class ApiAdapter {
     private const OFFSET = 1;

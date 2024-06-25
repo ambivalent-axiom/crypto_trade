@@ -1,8 +1,8 @@
 <?php
 require_once "vendor/autoload.php";
 
-use Ambax\CryptoTrade\Modules\Exchange;
-use Ambax\CryptoTrade\Modules\Ui;
+use Ambax\CryptoTrade\Models\Exchange;
+use Ambax\CryptoTrade\Models\Ui;
 
 $dotenv = Dotenv\Dotenv::createUnsafeImmutable(__DIR__);
 $dotenv->load();

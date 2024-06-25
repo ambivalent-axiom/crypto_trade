@@ -1,5 +1,5 @@
 <?php
-namespace Ambax\CryptoTrade\Modules;
+namespace Ambax\CryptoTrade\Models;
 
 use Symfony\Component\Console\Helper\QuestionHelper;
 use Symfony\Component\Console\Helper\Table;

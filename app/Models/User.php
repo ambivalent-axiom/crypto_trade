@@ -1,5 +1,5 @@
 <?php
-namespace Ambax\CryptoTrade\Modules;
+namespace Ambax\CryptoTrade\Models;
 use Ambax\CryptoTrade\Services\SqLite;
 use Ramsey\Uuid\Uuid;
 use Carbon\Carbon;

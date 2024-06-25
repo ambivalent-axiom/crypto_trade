@@ -1,5 +1,5 @@
 <?php
-namespace Ambax\CryptoTrade\Modules;
+namespace Ambax\CryptoTrade\Models;
 use Carbon\Carbon;
 use Ramsey\Uuid\Uuid;
 class Transaction

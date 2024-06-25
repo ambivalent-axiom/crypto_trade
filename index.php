@@ -1,49 +1,43 @@
 <?php
 require_once "vendor/autoload.php";
-
 use Ambax\CryptoTrade\Models\Exchange;
-use Ambax\CryptoTrade\Models\Ui;
 
 $dotenv = Dotenv\Dotenv::createUnsafeImmutable(__DIR__);
 $dotenv->load();
+//$coinMarketCap = new Exchange();
 
-$coinMarketCap = new Exchange();
-while(true) {
-    $option = Ui::menu('Main Menu');
-    switch ($option) {
-        case Ui::getMainMenu()[0]: // list top currencies
-            $coinMarketCap->listTop();
-            break;
-        case Ui::getMainMenu()[1]:  // list search results
-            $coinMarketCap->listSearchResults(strtoupper(readline("Ticking symbol: ")));
-            break;
-        case Ui::getMainMenu()[2]:  //'buy':
-            try {
-                $coinMarketCap->buy(strtoupper(readline("Symbol: ")), readline("For how many: "));
-            } catch (Exception $e) {
-                echo $e->getMessage();
-            }
-            break;
-        case Ui::getMainMenu()[3]: // sell
-            try {
-                $coinMarketCap->sell();
-            } catch (Exception $e) {
-                echo $e->getMessage();
-            }
-            break;
-        case Ui::getMainMenu()[4]: // show wallet
-            $coinMarketCap->showClientWalletStatus();
-            break;
-        case Ui::getMainMenu()[5]:  //transaction list
-            try {
-                $coinMarketCap->showTransactionHistory();
-            } catch (Exception $e) {
-                echo $e->getMessage();
-            }
-            break;
-        case Ui::getMainMenu()[6]: // exit
-            exit;
-    }
+$dispatcher = FastRoute\simpleDispatcher(function(FastRoute\RouteCollector $r) {
+
+    $r->addRoute('GET', '/users', 'get_all_users_handler');
+    // {id} must be a number (\d+)
+    $r->addRoute('GET', '/user/{id:\d+}', 'get_user_handler');
+    // The /{title} suffix is optional
+    $r->addRoute('GET', '/articles/{id:\d+}[/{title}]', 'get_article_handler');
+});
+
+// Fetch method and URI from somewhere
+$httpMethod = $_SERVER['REQUEST_METHOD'];
+$uri = $_SERVER['REQUEST_URI'];
+
+// Strip query string (?foo=bar) and decode URI
+if (false !== $pos = strpos($uri, '?')) {
+    $uri = substr($uri, 0, $pos);
 }
+$uri = rawurldecode($uri);
 
+$routeInfo = $dispatcher->dispatch($httpMethod, $uri);
+switch ($routeInfo[0]) {
+    case FastRoute\Dispatcher::NOT_FOUND:
+        // ... 404 Not Found
+        break;
+    case FastRoute\Dispatcher::METHOD_NOT_ALLOWED:
+        $allowedMethods = $routeInfo[1];
+        // ... 405 Method Not Allowed
+        break;
+    case FastRoute\Dispatcher::FOUND:
+        $handler = $routeInfo[1];
+        $vars = $routeInfo[2];
+        // ... call $handler with $vars
+        break;
+}
 

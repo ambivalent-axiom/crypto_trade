@@ -71,45 +71,7 @@ class Exchange {
     }
     private function initUser(): User
     {
-        if($this->users)
-        {
-            $keys = ['new'];
-            foreach ($this->users as $user) {
-                array_unshift($keys, $user->getName());
-            }
-            $key = Ui::menu('Select the client: ', $keys);
-            foreach ($this->users as $user) {
-                if ($user->getName() === $key) {
-                    if(empty($user->getPassword()))
-                    {
-                        $user->setPassword(readline("Create a password for this user: "));
-                    }
-                    if ($user->login(readline('Enter your password: '))) {
-                        $id = $user->getId();
-                    } else {
-                        throw new \Exception("Authentication failed, wrong password!\n");
-                    }
-                }
-            }
-            if ($key !== 'new') {
-                $user = new User($key, $this->db, $id);
-                return $user;
-            }
-        }
-        $user = new User(readline('Enter your name: '), $this->db);
-        $user->setPassword(readline('Create your password: '));
-        $this->db->createUser(
-            $user->getId(),
-            $user->getName(),
-            $user->getCurrency()
-        );
-        $this->db->addToWallet(
-            $user->getId(),
-            $user->getCurrency(),
-            User::getDefaultWallet(),
-            Carbon::now()->toDateTimeString()
-        );
-        return $user;
+        return new User('Arthur', $this->db, '457c48d4-32f1-4b90-8357-251c72f1a607');
     }
     private function numberFormat(float $number): string
     {

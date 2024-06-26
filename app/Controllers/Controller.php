@@ -5,15 +5,14 @@ use Ambax\CryptoTrade\Models\Currency;
 use Ambax\CryptoTrade\Models\User;
 use Ambax\CryptoTrade\Services\SqLite;
 use Carbon\Carbon;
-use JsonSerializable;
+use Exception;
 
-class Controller implements JsonSerializable
+class Controller
 {
     private User $user;
     private array $users;
     private SqLite $db;
     private array $latestUpdate; //array of Currency objects
-
     public function __construct() {
         //client initialization
         $this->db = new SqLite('database.sqlite');
@@ -23,17 +22,10 @@ class Controller implements JsonSerializable
         try {
             $this->exchangeApi = new ApiAdapter($this->user->getCurrency());
             $this->latestUpdate = $this->exchangeApi->getLatest();
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             echo $e->getMessage();
             exit;
         }
-    }
-    public function jsonSerialize()
-    {
-        return [
-            'user' => $this->user,
-            'latestUpdate' => $this->latestUpdate,
-        ];
     }
     public function index(): array
     {
@@ -65,22 +57,6 @@ class Controller implements JsonSerializable
     {
         return new User('Arthur', $this->db, '457c48d4-32f1-4b90-8357-251c72f1a607');
     }
-    private function chooseAmount(string $symbol): float
-    {
-        while(true) {
-            $amount = readline("Enter amount or empty for all: ");
-            if ($amount == '') {
-                return $this->user->getCurrencyAmount($symbol);
-            }
-            if (is_numeric($amount) && $this->user->getCurrencyAmount($symbol) < $amount) {
-                echo "You are unable to cover this transaction!\n";
-                continue;
-            }
-            if (is_numeric($amount)) {
-                return $amount;
-            }
-        }
-    }
     private function searchBySymbol($query): ?Currency
     {
         try {
@@ -93,7 +69,7 @@ class Controller implements JsonSerializable
                     );
                 }
             }
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             echo $e->getMessage();
         }
         return null;
@@ -111,22 +87,17 @@ class Controller implements JsonSerializable
         $currentPrice = $this->searchBySymbol($currency);
         return (($currentPrice->getPrice() - $averageBuy)/$averageBuy) * 100;
     }
-
-
-
-
-    public function buy(string $symbol, float $cost): void
+    public function buy(): void
     {
+        $symbol = strtoupper($_POST['symbol']);
+        $cost = $_POST['amount'];
         $currency = $this->searchBySymbol($symbol);
         if( ! $currency) {
-            throw new \Exception('Could not find symbol ' . $symbol . "\n");
+            throw new Exception('Could not find symbol ' . $symbol . "\n");
         }
         if($cost > $this->db->selectAmountByCurrency(
             $this->user->getId(), $this->user->getCurrency())) {
-            throw new \Exception('Insufficient wallet balance for this transaction!' . "\n");
-        }
-        if( ! Ui::question("Are you sure you want to proceed with order?")) {
-            throw new \Exception('Action aborted ' . $symbol . "\n");
+            throw new Exception('Insufficient wallet balance for this transaction!' . "\n");
         }
         $boughtAmount = $cost/$currency->getPrice();
         $this->user->takeFromWallet($this->user->getCurrency(), $cost);
@@ -143,24 +114,10 @@ class Controller implements JsonSerializable
     }
     public function sell(): void
     {
-        $options = $this->user->getWalletCurrencies();
-        try {
-            $symbol = strtoupper(Ui::menu('Select currency to sell: ', $options));
-        } catch (\Exception $e) {
-            echo $e->getMessage() . "\n";
-            return;
-        }
-        echo "In wallet: " . $this->user->getCurrencyAmount($symbol) . "\n";
-        $amount = $this->chooseAmount($symbol);
+        $symbol = strtoupper($_POST['symbol']);
+        $amount = $_POST['amount'];
         $currency = $this->searchBySymbol($symbol);
         if(empty($currency)) {return;}
-        if( ! Ui::question(
-            "Are you sure you want to sell " .
-            $amount . " " .
-            $symbol .
-            "?")) {
-            return;
-        }
         $inClientCurrency = $amount * $currency->getPrice();
         $this->user->takeFromWallet($symbol, $amount);
         $this->user->addToWallet($this->user->getCurrency(), $inClientCurrency);

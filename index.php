@@ -15,11 +15,10 @@ $dispatcher = FastRoute\simpleDispatcher(function(FastRoute\RouteCollector $r) {
     $r->addRoute('GET', '/', [Controller::class, 'index']);
     $r->addRoute('GET', '/wallet', [Controller::class, 'status']);
     $r->addRoute('GET', '/hist', [Controller::class, 'history']);
-    $r->addRoute('GET', '/{symbol}', [Controller::class, 'show']);
-
-
+    $r->addRoute('GET', '/show/{symbol}', [Controller::class, 'show']);
+    $r->addRoute('POST','/', [Controller::class, 'buy']);
+    $r->addRoute('POST','/wallet', [Controller::class, 'sell']);
 });
-
 
 // Fetch method and URI from somewhere
 $httpMethod = $_SERVER['REQUEST_METHOD'];
@@ -45,4 +44,3 @@ switch ($response) {
         echo $twig->render($route . '.html.twig', ['items' => $items]);
         break;
 }
-

@@ -2,9 +2,7 @@
 namespace Ambax\CryptoTrade\Controllers;
 use Ambax\CryptoTrade\Repositories\ApiAdapter;
 use Ambax\CryptoTrade\Models\Currency;
-use Ambax\CryptoTrade\Models\Transaction;
 use Ambax\CryptoTrade\Models\User;
-use Ambax\CryptoTrade\Models\Wallet;
 use Ambax\CryptoTrade\Services\SqLite;
 use Carbon\Carbon;
 use JsonSerializable;
@@ -37,23 +35,32 @@ class Controller implements JsonSerializable
             'latestUpdate' => $this->latestUpdate,
         ];
     }
-    public function index(): string
+    public function index(): array
     {
-        return json_encode($this->latestUpdate);
+        return $this->latestUpdate;
     }
-    public function show(string $vars): string
+    public function show(string $vars): array
     {
-        return json_encode($this->searchBySymbol($vars));
+        return [$this->searchBySymbol($vars)];
     }
-
-
-
-
-
-
-
-
-
+    public function status(): array
+    {
+        $wallet = $this->db->selectUserWallet($this->user->getId());
+        $content = [];
+        foreach ($wallet->getPortfolio() as $key => $amount) {
+            $content[] = [
+                'symbol' => $key,
+                'amount' => $amount,
+                'transactions' => count($this->db->selectTransactionsBySymbol($this->user->getId(), $key)),
+                'profit' => $key == 'USD' ? "NaN" : number_format($this->calcProfit($key), 2, '.', '') . "%"
+            ];
+        }
+        return $content;
+    }
+    public function history(): array
+    {
+        return $this->db->selectAllTransactions($this->user->getId());
+    }
     private function initUser(): User
     {
         return new User('Arthur', $this->db, '457c48d4-32f1-4b90-8357-251c72f1a607');
@@ -74,12 +81,6 @@ class Controller implements JsonSerializable
             }
         }
     }
-    private function numberFormat(float $number): string
-    {
-        $formattedNumber = rtrim(sprintf('%.10f', $number), '0');
-        $formattedNumber = rtrim($formattedNumber, '.');
-        return $formattedNumber;
-    }
     private function searchBySymbol($query): ?Currency
     {
         try {
@@ -97,22 +98,19 @@ class Controller implements JsonSerializable
         }
         return null;
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    private function calcProfit($currency): float
+    {
+        $averageBuy = $this->db->selectAvgPrice(
+            $this->user->getId(),
+            $currency,
+            $this->db->selectCurrencySince(
+                $this->user->getId(),
+                $currency
+            )
+        );
+        $currentPrice = $this->searchBySymbol($currency);
+        return (($currentPrice->getPrice() - $averageBuy)/$averageBuy) * 100;
+    }
 
 
 
@@ -158,7 +156,7 @@ class Controller implements JsonSerializable
         if(empty($currency)) {return;}
         if( ! Ui::question(
             "Are you sure you want to sell " .
-            $this->numberFormat($amount) . " " .
+            $amount . " " .
             $symbol .
             "?")) {
             return;
@@ -174,49 +172,5 @@ class Controller implements JsonSerializable
             $symbol,
             $inClientCurrency
         );
-    }
-    public function showClientWalletStatus(): void
-    {
-        $wallet = $this->db->selectUserWallet($this->user->getId());
-        $content = [];
-        foreach ($wallet->getPortfolio() as $key => $amount) {
-            $content[] = [
-                $key,
-                $this->numberFormat($amount),
-                count($this->db->selectTransactionsBySymbol($this->user->getId(), $key)),
-                $key == 'USD' ? "NaN" : number_format($this->calcProfit($key), 2, '.', '') . "%"
-            ];
-        }
-        Ui::showTable(Wallet::getWalletColumns(), $content, $this->user->getName(), $this->user->getCurrency());
-    }
-    public function showTransactionHistory(): void
-    {
-        $transactions = $this->db->selectAllTransactions($this->user->getId());
-        if (empty($transactions)) {
-            throw new \Exception('Could not find transaction history for ' . $this->user->getName() . "\n");
-        }
-        $content = array_map(function ($xtr) {
-            return [
-                $xtr->getTimestamp(),
-                $xtr->getAct(),
-                $this->numberFormat($xtr->getAmount()),
-                $xtr->getSymbol(),
-                $this->numberFormat($xtr->getLocalCurrency())
-            ];
-        }, $transactions);
-        Ui::showTable(Transaction::getColumns(), $content, $this->user->getName(), "Transaction History");
-    }
-    public function calcProfit($currency): float
-    {
-        $averageBuy = $this->db->selectAvgPrice(
-            $this->user->getId(),
-            $currency,
-            $this->db->selectCurrencySince(
-                $this->user->getId(),
-                $currency
-            )
-        );
-        $currentPrice = $this->searchBySymbol($currency);
-        return (($currentPrice->getPrice() - $averageBuy)/$averageBuy) * 100;
     }
 }

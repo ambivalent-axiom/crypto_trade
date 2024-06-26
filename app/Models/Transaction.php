@@ -1,5 +1,6 @@
 <?php
 namespace Ambax\CryptoTrade\Models;
+use Ambax\CryptoTrade\Controllers\Controller;
 use Carbon\Carbon;
 use Ramsey\Uuid\Uuid;
 class Transaction
@@ -9,13 +10,6 @@ class Transaction
     private string $act;
     private float $amount;
     private string $localCurrency;
-    private const TABLE_COLUMNS = [
-        'timestamp',
-        'Act',
-        'Amount',
-        'Crypto',
-        'USD'
-    ];
 
     public function __construct(
         string $act,
@@ -56,9 +50,5 @@ class Transaction
     public function getLocalCurrency(): string
     {
         return $this->localCurrency;
-    }
-    public static function getColumns(): array
-    {
-        return self::TABLE_COLUMNS;
     }
 }

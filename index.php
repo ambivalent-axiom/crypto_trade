@@ -1,14 +1,23 @@
 <?php
-require_once "vendor/autoload.php";
+use Ambax\CryptoTrade\Controllers\Controller;
+use Twig\Environment;
+use Twig\Loader\FilesystemLoader;
 
+require_once "vendor/autoload.php";
 $dotenv = Dotenv\Dotenv::createUnsafeImmutable(__DIR__);
 $dotenv->load();
-
-
+$loader = new FilesystemLoader(__DIR__ . '/app/Templates');
+$twig = new Environment($loader, [
+    'cache' => false,
+]);
 
 $dispatcher = FastRoute\simpleDispatcher(function(FastRoute\RouteCollector $r) {
-    $r->addRoute('GET', '/', [\Ambax\CryptoTrade\Controllers\Controller::class, 'index']);
-    $r->addRoute('GET', '/{symbol}', [\Ambax\CryptoTrade\Controllers\Controller::class, 'show']);
+    $r->addRoute('GET', '/', [Controller::class, 'index']);
+    $r->addRoute('GET', '/wallet', [Controller::class, 'status']);
+    $r->addRoute('GET', '/hist', [Controller::class, 'history']);
+    $r->addRoute('GET', '/{symbol}', [Controller::class, 'show']);
+
+
 });
 
 
@@ -31,8 +40,9 @@ switch ($response) {
         // ... 405 Method Not Allowed
         break;
     case FastRoute\Dispatcher::FOUND:
-        [$controller, $method] = $handler;
-        echo (new $controller)->$method(...array_values($vars));
+        [$controller, $route] = $handler;
+        $items = (new $controller)->$route(...array_values($vars));
+        echo $twig->render($route . '.html.twig', ['items' => $items]);
         break;
 }
 

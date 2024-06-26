@@ -4,7 +4,7 @@ use Ambax\CryptoTrade\Models\Currency;
 
 class ApiAdapter {
     private const OFFSET = 1;
-    private const LIMIT = 10;
+    private const LIMIT = 20;
     private Api $exchangeApi;
 
     public function __construct($userCurrency) {

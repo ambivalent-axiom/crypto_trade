@@ -1,17 +1,20 @@
 <?php
-namespace Ambax\CryptoTrade\Models;
-use Ambax\CryptoTrade\Clients\ApiAdapter;
+namespace Ambax\CryptoTrade\Controllers;
+use Ambax\CryptoTrade\Repositories\ApiAdapter;
+use Ambax\CryptoTrade\Models\Currency;
+use Ambax\CryptoTrade\Models\Transaction;
+use Ambax\CryptoTrade\Models\User;
+use Ambax\CryptoTrade\Models\Wallet;
 use Ambax\CryptoTrade\Services\SqLite;
 use Carbon\Carbon;
+use JsonSerializable;
 
-class Exchange {
+class Controller implements JsonSerializable
+{
     private User $user;
     private array $users;
     private SqLite $db;
     private array $latestUpdate; //array of Currency objects
-    private array $tableColumns;
-    private const DISPLAY_OFFSET = 0;
-    private const DISPLAY_LIMIT = 10;
 
     public function __construct() {
         //client initialization
@@ -26,32 +29,34 @@ class Exchange {
             echo $e->getMessage();
             exit;
         }
-        //other stuff
-        $this->tableColumns = ['Name', 'Symbol', 'Price ' . $this->user->getCurrency()];
     }
-    private function fetchLatestUpdate(): array
+    public function jsonSerialize()
     {
-        if(isset($this->latestUpdate)) {
-            return $this->latestUpdate;
-        }
-        throw new \Exception("Api Error! Update not found!\n");
+        return [
+            'user' => $this->user,
+            'latestUpdate' => $this->latestUpdate,
+        ];
     }
-    private function searchBySymbol($query): ?Currency
+    public function index(): string
     {
-        try {
-            foreach ($this->fetchLatestUpdate() as $currency) {
-                if ($currency->getSymbol() == $query) {
-                    return new Currency(
-                        $currency->getName(),
-                        $currency->getSymbol(),
-                        $currency->getPrice()
-                    );
-                }
-            }
-        } catch (\Exception $e) {
-            echo $e->getMessage();
-        }
-        return null;
+        return json_encode($this->latestUpdate);
+    }
+    public function show(string $vars): string
+    {
+        return json_encode($this->searchBySymbol($vars));
+    }
+
+
+
+
+
+
+
+
+
+    private function initUser(): User
+    {
+        return new User('Arthur', $this->db, '457c48d4-32f1-4b90-8357-251c72f1a607');
     }
     private function chooseAmount(string $symbol): float
     {
@@ -69,47 +74,49 @@ class Exchange {
             }
         }
     }
-    private function initUser(): User
-    {
-        return new User('Arthur', $this->db, '457c48d4-32f1-4b90-8357-251c72f1a607');
-    }
     private function numberFormat(float $number): string
     {
         $formattedNumber = rtrim(sprintf('%.10f', $number), '0');
         $formattedNumber = rtrim($formattedNumber, '.');
         return $formattedNumber;
     }
-    public function listTop(): void
+    private function searchBySymbol($query): ?Currency
     {
         try {
-            $limitedData = array_slice($this->fetchLatestUpdate(), self::DISPLAY_OFFSET, self::DISPLAY_LIMIT);
-            $rows = array_map(function ($item) {
-                return [
-                    $item->getName(),
-                    $item->getSymbol(),
-                    number_format(
-                        $item->getPrice(),
-                        2,
-                        '.',
-                        ''),
-                ];
-            }, $limitedData);
-            Ui::showTable($this->tableColumns, $rows, "Top " . self::DISPLAY_LIMIT . " Crypto");
+            foreach ($this->latestUpdate as $currency) {
+                if ($currency->getSymbol() == $query) {
+                    return new Currency(
+                        $currency->getName(),
+                        $currency->getSymbol(),
+                        $currency->getPrice()
+                    );
+                }
+            }
         } catch (\Exception $e) {
             echo $e->getMessage();
         }
+        return null;
     }
-    public function listSearchResults(string $query): void
-    {
-        $coin = $this->searchBySymbol($query);
-        if( ! $coin) {return;}
-        $coin = [
-            $coin->getName(),
-            $coin->getSymbol(),
-            number_format($coin->getPrice(), 2, '.', ''),
-        ];
-        Ui::showTable($this->tableColumns, [$coin], "Search By $query");
-    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     public function buy(string $symbol, float $cost): void
     {
         $currency = $this->searchBySymbol($symbol);

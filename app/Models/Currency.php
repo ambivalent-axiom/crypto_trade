@@ -1,6 +1,8 @@
 <?php
 namespace Ambax\CryptoTrade\Models;
-class Currency
+use JsonSerializable;
+
+class Currency implements JsonSerializable
 {
     private string $name;
     private string $symbol;
@@ -10,6 +12,14 @@ class Currency
         $this->name = $name;
         $this->symbol = $symbol;
         $this->price = $price;
+    }
+    public function jsonSerialize()
+    {
+        return [
+            'name' => $this->name,
+            'symbol' => $this->symbol,
+            'price' => $this->price
+        ];
     }
     public function getName(): string
     {

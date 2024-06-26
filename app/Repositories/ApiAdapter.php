@@ -1,5 +1,5 @@
 <?php
-namespace Ambax\CryptoTrade\Clients;
+namespace Ambax\CryptoTrade\Repositories;
 use Ambax\CryptoTrade\Models\Currency;
 
 class ApiAdapter {

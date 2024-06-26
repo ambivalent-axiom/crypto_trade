@@ -1,5 +1,5 @@
 <?php
-namespace Ambax\CryptoTrade\Clients;
+namespace Ambax\CryptoTrade\Repositories;
 interface Api {
     public function get(string $method);
 }

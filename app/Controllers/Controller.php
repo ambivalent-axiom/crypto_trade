@@ -6,6 +6,7 @@ use Ambax\CryptoTrade\Repositories\Paprika;
 use Ambax\CryptoTrade\Repositories\CoinMC;
 use Ambax\CryptoTrade\Services\SqLite;
 use Carbon\Carbon;
+use Error;
 use Exception;
 use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
@@ -37,7 +38,7 @@ class Controller
     }
     public function show(): array
     {
-        $vars = strtoupper($_POST['symbol']);
+        $vars = htmlspecialchars(strtoupper($_POST['symbol']), ENT_QUOTES, 'UTF-8');
         return [$this->searchBySymbol($vars)];
     }
     public function status(): array
@@ -60,8 +61,8 @@ class Controller
     }
     public function buy(): void
     {
-        $symbol = strtoupper($_POST['symbol']);
-        $cost = $_POST['amount'];
+        $symbol = htmlspecialchars(strtoupper($_POST['symbol']), ENT_QUOTES, 'UTF-8');
+        $cost = htmlspecialchars($_POST['amount'], ENT_QUOTES, 'UTF-8');
         $currency = $this->searchBySymbol($symbol);
         if( ! $currency) {
             throw new Exception('Could not find symbol ' . $symbol . "\n");
@@ -90,8 +91,8 @@ class Controller
     }
     public function sell(): void
     {
-        $symbol = strtoupper($_POST['symbol']);
-        $amount = $_POST['amount'];
+        $symbol = htmlspecialchars(strtoupper($_POST['symbol']), ENT_QUOTES, 'UTF-8');
+        $amount = htmlspecialchars($_POST['amount'], ENT_QUOTES, 'UTF-8');
         $wallet = $this->db->selectUserWallet($this->user->getId());
         $currency = $this->searchBySymbol($symbol);
 
@@ -154,8 +155,11 @@ class Controller
 
         //TODO fix this error
         //if it does not exist in a wallet it will find null
-        $price = $currentPrice->getPrice();
-
+        try {
+            $price = $currentPrice->getPrice();
+        } catch (Error $e) {
+            throw new Exception('Uups! Looks like connection issues...');
+        }
         return (($price - $averageBuy)/$averageBuy) * 100;
     }
 }

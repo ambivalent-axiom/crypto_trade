@@ -10,9 +10,9 @@ class User
     private string $id;
     private string $password;
     private string $currency;
-    private const DEFAULT_CURRENCY = 'USD';
-    private const DEFAULT_WALLET = 1000;
-    private const DEFAULT_TIMEZONE = 'Europe/Riga';
+    public const DEFAULT_CURRENCY = 'USD';
+    public const DEFAULT_WALLET = 1000;
+    public const DEFAULT_TIMEZONE = 'Europe/Riga';
     public function __construct(
         string $name,
         SqLite $sqLite,
@@ -92,13 +92,4 @@ class User
     {
         return md5($password) == $this->getPassword();
     }
-    public static function getDefaultTimezone(): string
-    {
-        return self::DEFAULT_TIMEZONE;
-    }
-    public static function getDefaultWallet(): string
-    {
-        return self::DEFAULT_WALLET;
-    }
-
 }

@@ -7,7 +7,7 @@
     <tr>
         <th>Name</th>
         <th>Symbol</th>
-        <th>Price</th>
+        <th>Price USD</th>
     </tr>
     </thead>
     <tbody>
@@ -15,7 +15,7 @@
         <tr>
             <td>{{ item.getName() }}</td>
             <td>{{ item.getSymbol() }}</td>
-            <td>{{ item.getPrice() }}</td>
+            <td>{{ item.getPrice()|number_format(8, '.', '') }} </td>
         </tr>
     {% endfor %}
     </tbody>

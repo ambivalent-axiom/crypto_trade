@@ -13,6 +13,11 @@ h1 {
     margin-left: 20px;
 }
 
+a {
+    text-decoration: none;
+    color: black;
+}
+
 table {
     margin-bottom: 10px;
     margin-left: 20px;
@@ -25,6 +30,20 @@ form {
     display: inline-block;
     border-radius: 5px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.container {
+    display: flex;
+}
+.well {
+    margin-bottom: 20px;
+    width: 90%;
+}
+
+.menu {
+    margin-top: 20px;
+    margin-left: 20px;
+    text-color: black;
 }
 
 .form-group {
@@ -59,3 +78,6 @@ input[type="submit"] {
 input[type="submit"]:hover {
     background-color: #0056b3;
 }
+
+.btn:hover {
+    background-color: #0056b3;

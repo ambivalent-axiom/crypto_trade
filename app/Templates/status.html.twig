@@ -1,32 +1,41 @@
 {% include 'header.html.twig' %}
 <body>
+{% include 'menu.html.twig' %}
 <h1>Wallet Status</h1>
-<table border="0">
-    <thead>
-    <tr>
-        <th>Symbol</th>
-        <th>Amount</th>
-        <th>Transactions</th>
-        <th>Profitability</th>
-    </tr>
-    </thead>
-    <tbody>
-    {% for item in items %}
-        <tr>
-            <td>{{ item['symbol'] }}</td>
-            <td>{{ item['amount']|number_format(8, '.', '') }}</td>
-            <td>{{ item['transactions'] }}</td>
-            <td>{{ item['profit'] }}</td>
-        </tr>
-    {% endfor %}
-    </tbody>
-</table>
-<form action="" method="post" enctype="multipart/form-data">
-    <label for="symbol">Symbol:</label>
-    <input type="text" name="symbol">
-    <label for="amount">Amount:</label>
-    <input type="text" name="amount">
-    <input class="btn" type="submit" name="sell" value="Sell">
-</form>
+<div class="container">
+    <div>
+        <table border="0">
+            <thead>
+            <tr>
+                <th>Symbol</th>
+                <th>Amount</th>
+                <th>Transactions</th>
+                <th>Profitability</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for item in items %}
+                <tr>
+                    <td>{{ item['symbol'] }}</td>
+                    <td>{{ item['amount']|number_format(8, '.', '') }}</td>
+                    <td>{{ item['transactions'] }}</td>
+                    <td>{{ item['profit'] }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div>
+        <div class="well">
+            <form action="" method="post" enctype="multipart/form-data">
+                <label for="symbol">Symbol:</label>
+                <input type="text" name="symbol">
+                <label for="amount">Amount:</label>
+                <input type="text" name="amount">
+                <input class="btn" type="submit" name="sell" value="Sell">
+            </form>
+        </div>
+    </div>
+</div>
 </body>
 </html>

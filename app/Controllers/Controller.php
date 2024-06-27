@@ -9,13 +9,14 @@ use Carbon\Carbon;
 use Exception;
 use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
+use TypeError;
 
 class Controller
 {
     private User $user;
     private SqLite $db;
     private array $latestUpdate; //array of Currency objects
-    public const REQUEST_LIMIT = 20;
+    public const REQUEST_LIMIT = 100;
     public function __construct() {
         $this->logger = new Logger('Controller');
         $this->logger->pushHandler(new StreamHandler('app.log'));
@@ -34,8 +35,9 @@ class Controller
     {
         return $this->latestUpdate;
     }
-    public function show(string $vars): array
+    public function show(): array
     {
+        $vars = strtoupper($_POST['symbol']);
         return [$this->searchBySymbol($vars)];
     }
     public function status(): array
@@ -69,7 +71,12 @@ class Controller
             throw new Exception('Insufficient wallet balance for this transaction!' . "\n");
         }
         $boughtAmount = $cost/$currency->getPrice();
-        $this->user->takeFromWallet($this->user->getCurrency(), $cost);
+        try {
+            $this->user->takeFromWallet($this->user->getCurrency(), $cost);
+        } catch (TypeError $e) {
+            throw new Exception('Amount should be numeric and cannot be empty!');
+        }
+
 
         $this->user->addToWallet($currency->getSymbol(), $boughtAmount);
         $this->db->insertTransaction(
@@ -85,8 +92,28 @@ class Controller
     {
         $symbol = strtoupper($_POST['symbol']);
         $amount = $_POST['amount'];
+        $wallet = $this->db->selectUserWallet($this->user->getId());
         $currency = $this->searchBySymbol($symbol);
-        if(empty($currency)) {return;}
+
+        if (empty($symbol) || empty($amount)) {
+            throw new Exception('Fields cannot be empty!');
+        }
+        if ($amount <= 0 || ! is_numeric($amount)) {
+            throw new Exception('Wrong amount!');
+        }
+        if ($symbol == 'USD') {
+            throw new Exception("Forbidden sell operation with USD!");
+        }
+        if(empty($currency)) {
+            throw new Exception('Could not find symbol ' . $symbol);
+        }
+        if ( ! in_array($symbol, array_keys($wallet->getPortfolio()))) {
+            throw new Exception("You don't have such currency in Your protfolio!");
+        }
+        if ($wallet->getPortfolio()[$symbol] < $amount) {
+            throw new Exception('Insufficient wallet balance for this transaction!');
+        }
+
         $inClientCurrency = $amount * $currency->getPrice();
         $this->user->takeFromWallet($symbol, $amount);
         $this->user->addToWallet($this->user->getCurrency(), $inClientCurrency);
@@ -123,6 +150,12 @@ class Controller
             )
         );
         $currentPrice = $this->searchBySymbol($currency);
-        return (($currentPrice->getPrice() - $averageBuy)/$averageBuy) * 100;
+
+
+        //TODO fix this error
+        //if it does not exist in a wallet it will find null
+        $price = $currentPrice->getPrice();
+
+        return (($price - $averageBuy)/$averageBuy) * 100;
     }
 }

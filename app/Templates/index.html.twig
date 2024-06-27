@@ -1,38 +1,47 @@
 {% include 'header.html.twig' %}
 <body>
+{% include 'menu.html.twig' %}
 <h1>Currency List</h1>
-<table border="0">
-    <thead>
-    <tr>
-        <th>Name</th>
-        <th>Symbol</th>
-        <th>Price USD</th>
-    </tr>
-    </thead>
-    <tbody>
-    {% for item in items %}
-        <tr>
-            <td>{{ item.getName() }}</td>
-            <td>{{ item.getSymbol() }}</td>
-            <td>{{ item.getPrice()|number_format(8, '.', '') }}</td>
-        </tr>
-    {% endfor %}
-    </tbody>
-</table>
 
-<form action="" method="post" enctype="multipart/form-data">
+<div class="container">
     <div>
-        <label for="symbol">Symbol:</label>
-        <input type="text" name="symbol">
+        <table border="0">
+            <thead>
+            <tr>
+                <th>Name</th>
+                <th>Symbol</th>
+                <th>Price USD</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for item in items %}
+                <tr>
+                    <td>{{ item.getName() }}</td>
+                    <td>{{ item.getSymbol() }}</td>
+                    <td>{{ item.getPrice()|number_format(8, '.', '') }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
     </div>
     <div>
-        <label for="amount">For how much USD?:</label>
-        <input type="text" name="amount">
+        <div class="well">
+            <form id="buy" action="" method="post" enctype="multipart/form-data">
+                <label for="buy">Symbol:</label>
+                <input type="text" name="symbol">
+                <label for="buy">For how much USD?:</label>
+                <input type="text" name="amount">
+                <input class="btn" type="submit" name="buy" value="Buy">
+            </form>
+        </div>
+        <div class ="well">
+            <form id="search" action='show' method="post" enctype="multipart/form-data">
+                <label for="search">Search:</label>
+                <input type="text" name="symbol">
+                <input name="Search" class="btn" value="Search" type="submit" >
+            </form>
+        </div>
     </div>
-    <div>
-        <input class="btn" type="submit" name="buy" value="Buy">
-    </div>
-</form>
-
+</div>
 </body>
 </html>

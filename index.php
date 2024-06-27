@@ -15,7 +15,7 @@ $dispatcher = FastRoute\simpleDispatcher(function(FastRoute\RouteCollector $r) {
     $r->addRoute('GET', '/', [Controller::class, 'index']);
     $r->addRoute('GET', '/wallet', [Controller::class, 'status']);
     $r->addRoute('GET', '/hist', [Controller::class, 'history']);
-    $r->addRoute('GET', '/show/{symbol}', [Controller::class, 'show']);
+    $r->addRoute('POST', '/show', [Controller::class, 'show']);
     $r->addRoute('POST','/', [Controller::class, 'buy']);
     $r->addRoute('POST','/wallet', [Controller::class, 'sell']);
 });
@@ -23,7 +23,6 @@ $dispatcher = FastRoute\simpleDispatcher(function(FastRoute\RouteCollector $r) {
 // Fetch method and URI from somewhere
 $httpMethod = $_SERVER['REQUEST_METHOD'];
 $uri = $_SERVER['REQUEST_URI'];
-
 // Strip query string (?foo=bar) and decode URI
 if (false !== $pos = strpos($uri, '?')) {
     $uri = substr($uri, 0, $pos);

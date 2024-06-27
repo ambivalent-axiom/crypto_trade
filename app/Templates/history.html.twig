@@ -1,0 +1,27 @@
+{% include 'header.html.twig' %}
+<body>
+<h1>Transaction history</h1>
+<table border="0">
+    <thead>
+    <tr>
+        <th>Timestamp</th>
+        <th>Action</th>
+        <th>Amount</th>
+        <th>Symbol</th>
+        <th>USD</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for item in items %}
+        <tr>
+            <td>{{ item.getTimestamp() }}</td>
+            <td>{{ item.getAct() }}</td>
+            <td>{{ item.getAmount()|number_format(8, '.', '') }}</td>
+            <td>{{ item.getSymbol() }}</td>
+            <td>{{ item.getLocalCurrency()|number_format(2, '.', '') }}</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+</body>
+</html>

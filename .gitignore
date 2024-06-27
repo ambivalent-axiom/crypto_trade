@@ -1,0 +1,7 @@
+.idea
+.env
+app.log
+test.php
+index_old.php
+/vendor/
+/db/*

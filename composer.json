@@ -19,6 +19,11 @@
       "ext-curl": "*",
       "ext-readline": "*",
         "nesbot/carbon": "^2.72",
-        "ramsey/uuid": "^4.2"
+        "ramsey/uuid": "^4.2",
+        "vlucas/phpdotenv": "^5.6",
+        "guzzlehttp/guzzle": "^7.8",
+      "ext-sqlite3": "*",
+        "nikic/fast-route": "^1.3",
+        "twig/twig": "^3.0"
     }
 }

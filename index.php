@@ -29,9 +29,9 @@ if (false !== $pos = strpos($uri, '?')) {
     $uri = substr($uri, 0, $pos);
 }
 $uri = rawurldecode($uri);
-[$response, $handler, $vars] = $dispatcher->dispatch($httpMethod, $uri);
+[$case, $handler, $vars] = $dispatcher->dispatch($httpMethod, $uri);
 
-switch ($response) {
+switch ($case) {
     case FastRoute\Dispatcher::NOT_FOUND:
         // ... 404 Not Found
         break;
@@ -47,6 +47,8 @@ switch ($response) {
             $route = 'error';
             $items = $e->getMessage();
         }
-        echo $twig->render($route . '.html.twig', ['items' => $items, 'loc' => $origin]);
+        echo $twig->render(
+            $items->getAddress() . '.html.twig',
+            ['items' => $items->getData(), 'loc' => $origin]);
         break;
 }

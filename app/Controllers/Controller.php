@@ -2,6 +2,7 @@
 namespace Ambax\CryptoTrade\Controllers;
 use Ambax\CryptoTrade\Repositories\Api\Api;
 use Ambax\CryptoTrade\Repositories\Database\SqLite;
+use Ambax\CryptoTrade\Response;
 use Ambax\CryptoTrade\Services\Currency;
 use Ambax\CryptoTrade\Services\User;
 use Carbon\Carbon;
@@ -24,16 +25,16 @@ class Controller
         $this->exchangeApi = $api;
         $this->latestCurrencyUpdate = $this->exchangeApi->get();
     }
-    public function index(): array
+    public function index(): Response
     {
-        return $this->latestCurrencyUpdate;
+        return new Response($this->latestCurrencyUpdate, 'index');
     }
-    public function show(): array
+    public function show(): Response
     {
         $vars = htmlspecialchars(strtoupper($_POST['symbol']), ENT_QUOTES, 'UTF-8');
-        return [Currency::searchBySymbol($vars, $this->latestCurrencyUpdate)];
+        return new Response([Currency::searchBySymbol($vars, $this->latestCurrencyUpdate)], 'show');
     }
-    public function status(): array
+    public function status(): Response
     {
         $wallet = $this->db->selectUserWallet($this->user->getId());
         $content = [];
@@ -53,11 +54,11 @@ class Controller
                 throw new Exception($e->getMessage());
             }
         }
-        return $content;
+        return new Response($content, 'status');
     }
-    public function history(): array
+    public function history(): Response
     {
-        return $this->db->selectAllTransactions($this->user->getId());
+        return new Response($this->db->selectAllTransactions($this->user->getId()), 'history');
     }
     public function buy(): void
     {

@@ -1,12 +1,14 @@
 <?php
+require_once "vendor/autoload.php";
 use Ambax\CryptoTrade\Controllers\Controller;
 use Twig\Environment;
 use Twig\Loader\FilesystemLoader;
 
-require_once "vendor/autoload.php";
+$container = (require 'DIconfig.php')();
+
 $dotenv = Dotenv\Dotenv::createUnsafeImmutable(__DIR__);
 $dotenv->load();
-$loader = new FilesystemLoader(__DIR__ . '/app/Templates');
+$loader = new FilesystemLoader(__DIR__ . '/visuals');
 $twig = new Environment($loader, [
     'cache' => false,
 ]);
@@ -41,7 +43,7 @@ switch ($response) {
         [$controller, $route] = $handler;
         $origin = $_SERVER['REQUEST_URI'];
         try {
-            $items = (new $controller)->$route(...array_values($vars));
+            $items = ($container->get($controller))->$route(...array_values($vars));
         } catch (Exception $e) {
             $route = 'error';
             $items = $e->getMessage();

@@ -1,11 +1,9 @@
 <?php
 namespace Ambax\CryptoTrade\Models;
-
 class Wallet
 {
     private string $id;
     private array $portfolio;
-    private const WALLET_COLUMNS = ['Symbol', 'Amount', 'Transactions', 'Profit'];
 
     public function __construct($id)
     {
@@ -22,9 +20,5 @@ class Wallet
     public function addPortfolio($currency, $amount): void
     {
         $this->portfolio[$currency] = $amount;
-    }
-    public static function getWalletColumns(): array
-    {
-        return self::WALLET_COLUMNS;
     }
 }

@@ -1,12 +1,10 @@
 <?php
 namespace Ambax\CryptoTrade\Controllers;
-use Ambax\CryptoTrade\Models\Currency;
-use Ambax\CryptoTrade\Models\User;
-use Ambax\CryptoTrade\Repositories\Paprika;
-use Ambax\CryptoTrade\Repositories\CoinMC;
-use Ambax\CryptoTrade\Services\SqLite;
+use Ambax\CryptoTrade\Repositories\Api\Api;
+use Ambax\CryptoTrade\Repositories\Database\SqLite;
+use Ambax\CryptoTrade\Services\Currency;
+use Ambax\CryptoTrade\Services\User;
 use Carbon\Carbon;
-use Error;
 use Exception;
 use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
@@ -16,42 +14,44 @@ class Controller
 {
     private User $user;
     private SqLite $db;
-    private array $latestUpdate; //array of Currency objects
+    private array $latestCurrencyUpdate;
     public const REQUEST_LIMIT = 100;
-    public function __construct() {
-        $this->logger = new Logger('Controller');
+    public function __construct(Logger $logger, SqLite $sqLite, User $user, Api $api) {
+        $this->logger = $logger->withName('Controller');
         $this->logger->pushHandler(new StreamHandler('app.log'));
-        $this->db = new SqLite('database.sqlite');
-        $this->user = new User('Arthur', $this->db, '457c48d4-32f1-4b90-8357-251c72f1a607');
-        try {
-            $this->exchangeApi = new CoinMC();
-            $this->latestUpdate = $this->exchangeApi->get();
-        } catch (Exception $e) {
-            $this->logger->error($e->getMessage());
-            $this->exchangeApi = new Paprika();
-            $this->latestUpdate = $this->exchangeApi->get();
-        }
+        $this->db = $sqLite;
+        $this->user = $user;
+        $this->exchangeApi = $api;
+        $this->latestCurrencyUpdate = $this->exchangeApi->get();
     }
     public function index(): array
     {
-        return $this->latestUpdate;
+        return $this->latestCurrencyUpdate;
     }
     public function show(): array
     {
         $vars = htmlspecialchars(strtoupper($_POST['symbol']), ENT_QUOTES, 'UTF-8');
-        return [$this->searchBySymbol($vars)];
+        return [Currency::searchBySymbol($vars, $this->latestCurrencyUpdate)];
     }
     public function status(): array
     {
         $wallet = $this->db->selectUserWallet($this->user->getId());
         $content = [];
         foreach ($wallet->getPortfolio() as $key => $amount) {
-            $content[] = [
-                'symbol' => $key,
-                'amount' => $amount,
-                'transactions' => count($this->db->selectTransactionsBySymbol($this->user->getId(), $key)),
-                'profit' => $key == 'USD' ? "NaN" : number_format($this->calcProfit($key), 2, '.', '') . "%"
-            ];
+            try {
+                $content[] = [
+                    'symbol' => $key,
+                    'amount' => $amount,
+                    'transactions' => count($this->db->selectTransactionsBySymbol($this->user->getId(), $key)),
+                    'profit' => $key == 'USD' ? "NaN" : number_format(
+                            $this->user->calcProfit($key, $this->latestCurrencyUpdate),
+                            2,
+                            '.',
+                            '') . "%"
+                ];
+            } catch (Exception $e) {
+                throw new Exception($e->getMessage());
+            }
         }
         return $content;
     }
@@ -63,7 +63,7 @@ class Controller
     {
         $symbol = htmlspecialchars(strtoupper($_POST['symbol']), ENT_QUOTES, 'UTF-8');
         $cost = htmlspecialchars($_POST['amount'], ENT_QUOTES, 'UTF-8');
-        $currency = $this->searchBySymbol($symbol);
+        $currency = Currency::searchBySymbol($symbol, $this->latestCurrencyUpdate);
         if( ! $currency) {
             throw new Exception('Could not find symbol ' . $symbol . "\n");
         }
@@ -94,7 +94,7 @@ class Controller
         $symbol = htmlspecialchars(strtoupper($_POST['symbol']), ENT_QUOTES, 'UTF-8');
         $amount = htmlspecialchars($_POST['amount'], ENT_QUOTES, 'UTF-8');
         $wallet = $this->db->selectUserWallet($this->user->getId());
-        $currency = $this->searchBySymbol($symbol);
+        $currency = Currency::searchBySymbol($symbol, $this->latestCurrencyUpdate);
 
         if (empty($symbol) || empty($amount)) {
             throw new Exception('Fields cannot be empty!');
@@ -126,40 +126,5 @@ class Controller
             $symbol,
             $inClientCurrency
         );
-    }
-    private function searchBySymbol($query): ?Currency
-    {
-        foreach ($this->latestUpdate as $currency) {
-            if ($currency->getSymbol() == $query) {
-                return new Currency(
-                    $currency->getName(),
-                    $currency->getSymbol(),
-                    $currency->getPrice()
-                );
-            }
-        }
-        return null;
-    }
-    private function calcProfit($currency): float
-    {
-        $averageBuy = $this->db->selectAvgPrice(
-            $this->user->getId(),
-            $currency,
-            $this->db->selectCurrencySince(
-                $this->user->getId(),
-                $currency
-            )
-        );
-        $currentPrice = $this->searchBySymbol($currency);
-
-
-        //TODO fix this error
-        //if it does not exist in a wallet it will find null
-        try {
-            $price = $currentPrice->getPrice();
-        } catch (Error $e) {
-            throw new Exception('Uups! Looks like connection issues...');
-        }
-        return (($price - $averageBuy)/$averageBuy) * 100;
     }
 }

@@ -1,8 +1,8 @@
 <?php
-namespace Ambax\CryptoTrade\Repositories;
+namespace Ambax\CryptoTrade\Repositories\Api;
 use Ambax\CryptoTrade\Controllers\Controller;
-use Ambax\CryptoTrade\Models\Currency;
-use Ambax\CryptoTrade\Models\User;
+use Ambax\CryptoTrade\Services\Currency;
+use Ambax\CryptoTrade\Services\User;
 use Exception;
 use GuzzleHttp\Client;
 use Monolog\Handler\StreamHandler;

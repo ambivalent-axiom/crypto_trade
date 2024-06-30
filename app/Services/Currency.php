@@ -1,5 +1,5 @@
 <?php
-namespace Ambax\CryptoTrade\Models;
+namespace Ambax\CryptoTrade\Services;
 class Currency
 {
     private string $name;
@@ -22,5 +22,18 @@ class Currency
     public function getPrice(): float
     {
         return $this->price;
+    }
+    public static function searchBySymbol(string $query, array $currencies): ?Currency
+    {
+        foreach ($currencies as $currency) {
+            if ($currency->getSymbol() == $query) {
+                return new self(
+                    $currency->getName(),
+                    $currency->getSymbol(),
+                    $currency->getPrice()
+                );
+            }
+        }
+        return null;
     }
 }

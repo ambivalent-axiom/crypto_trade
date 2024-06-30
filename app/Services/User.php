@@ -1,8 +1,10 @@
 <?php
-namespace Ambax\CryptoTrade\Models;
-use Ambax\CryptoTrade\Services\SqLite;
-use Ramsey\Uuid\Uuid;
+namespace Ambax\CryptoTrade\Services;
+use Ambax\CryptoTrade\Repositories\Database\SqLite;
 use Carbon\Carbon;
+use Error;
+use Exception;
+use Ramsey\Uuid\Uuid;
 
 class User
 {
@@ -91,5 +93,25 @@ class User
     public function login($password): bool
     {
         return md5($password) == $this->getPassword();
+    }
+    public function calcProfit($symbol, $currencies): float
+    {
+        $averageBuy = $this->db->selectAvgPrice(
+            $this->id,
+            $symbol,
+            $this->db->selectCurrencySince(
+                $this->id,
+                $symbol
+            )
+        );
+        $currentPrice = Currency::searchBySymbol($symbol, $currencies);
+        //TODO fix this error
+        //if it does not exist in a wallet it will find null
+        try {
+            $price = $currentPrice->getPrice();
+        } catch (Error $e) {
+            throw new Exception('Uups! Looks like connection issues...');
+        }
+        return (($price - $averageBuy)/$averageBuy) * 100;
     }
 }

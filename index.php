@@ -1,6 +1,5 @@
 <?php
 require_once "vendor/autoload.php";
-use Ambax\CryptoTrade\Controllers\Controller;
 use Twig\Environment;
 use Twig\Loader\FilesystemLoader;
 
@@ -8,18 +7,18 @@ $container = (require 'DIconfig.php')();
 
 $dotenv = Dotenv\Dotenv::createUnsafeImmutable(__DIR__);
 $dotenv->load();
-$loader = new FilesystemLoader(__DIR__ . '/visuals');
+$loader = new FilesystemLoader(__DIR__ . '/views');
 $twig = new Environment($loader, [
     'cache' => false,
 ]);
 
 $dispatcher = FastRoute\simpleDispatcher(function(FastRoute\RouteCollector $r) {
-    $r->addRoute('GET', '/', [Controller::class, 'index']);
-    $r->addRoute('GET', '/wallet', [Controller::class, 'status']);
-    $r->addRoute('GET', '/hist', [Controller::class, 'history']);
-    $r->addRoute('POST', '/show', [Controller::class, 'show']);
-    $r->addRoute('POST','/', [Controller::class, 'buy']);
-    $r->addRoute('POST','/wallet', [Controller::class, 'sell']);
+    $routes = include ('routes.php');
+    foreach ($routes as $route)
+    {
+        [$method, $path, $controller] = $route;
+        $r->addRoute($method, $path, $controller);
+    }
 });
 
 // Fetch method and URI from somewhere

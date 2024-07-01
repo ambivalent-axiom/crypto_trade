@@ -1,18 +1,23 @@
 <?php
-namespace Ambax\CryptoTrade\Repositories\Database;
-use Ambax\CryptoTrade\Services\User;
+namespace Ambax\CryptoTrade\Services\RepositoryServices;
+use Ambax\CryptoTrade\Repositories\Database\Database;
+use Ambax\CryptoTrade\Services\UserService;
 use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
 
 class UserRepositoryService
 {
-    public function __construct(Logger $logger, Database $db)
+    public function __construct(
+        Logger $logger,
+        StreamHandler $loggerStreamHandler,
+        Database $db
+
+    )
     {
         $this->logger = $logger->withName('Database');
-        $this->logger->pushHandler(new StreamHandler('app.log'));
+        $this->logger->pushHandler($loggerStreamHandler);
         $this->database = $db::set();
     }
-
     public function createUser(
         string $id,
         string $name,
@@ -37,7 +42,7 @@ class UserRepositoryService
         $query = 'SELECT * FROM users';
         $result = $this->database->query($query);
         while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
-            $users[] = new User(
+            $users[] = new UserService(
                 $row['name'],
                 $this, $row['id'],
                 $row['currency'],

@@ -1,15 +1,20 @@
 <?php
-namespace Ambax\CryptoTrade\Repositories\Database;
+namespace Ambax\CryptoTrade\Services\RepositoryServices;
 use Ambax\CryptoTrade\Models\Transaction;
+use Ambax\CryptoTrade\Repositories\Database\Database;
 use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
 
 class TransactionRepositoryService
 {
-    public function __construct(Logger $logger, Database $db)
+    public function __construct(
+        Logger $logger,
+        StreamHandler $loggerStreamHandler,
+        Database $db
+    )
     {
         $this->logger = $logger->withName('TransactionRepositoryService');
-        $this->logger->pushHandler(new StreamHandler('app.log'));
+        $this->logger->pushHandler($loggerStreamHandler);
         $this->database = $db::set();
     }
     public function insertTransaction(

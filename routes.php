@@ -1,11 +1,11 @@
 <?php
 return [
-    ['GET', '/', [Ambax\CryptoTrade\Controllers\Controller::class, 'index']],
-    ['GET', '/wallet', [Ambax\CryptoTrade\Controllers\Controller::class, 'status']],
-    ['GET', '/hist', [Ambax\CryptoTrade\Controllers\Controller::class, 'history']],
-    ['POST', '/show', [Ambax\CryptoTrade\Controllers\Controller::class, 'show']],
-    ['POST','/', [Ambax\CryptoTrade\Controllers\Controller::class, 'buy']],
-    ['POST','/wallet', [Ambax\CryptoTrade\Controllers\Controller::class, 'sell']]
+    ['GET', '/', [Ambax\CryptoTrade\Controllers\CurrencyController::class, 'index']],
+    ['GET', '/wallet', [Ambax\CryptoTrade\Controllers\WalletController::class, 'status']],
+    ['GET', '/hist', [Ambax\CryptoTrade\Controllers\TransactionController::class, 'history']],
+    ['POST', '/show', [Ambax\CryptoTrade\Controllers\CurrencyController::class, 'show']],
+    ['POST','/', [Ambax\CryptoTrade\Controllers\TransactionController::class, 'buy']],
+    ['POST','/wallet', [Ambax\CryptoTrade\Controllers\TransactionController::class, 'sell']]
 ];
 
 

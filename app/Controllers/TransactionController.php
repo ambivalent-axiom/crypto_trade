@@ -2,78 +2,37 @@
 namespace Ambax\CryptoTrade\Controllers;
 use Ambax\CryptoTrade\RedirectResponse;
 use Ambax\CryptoTrade\Repositories\Api\Api;
-use Ambax\CryptoTrade\Repositories\Database\UserRepositoryService;
-use Ambax\CryptoTrade\Repositories\Database\TransactionRepositoryService;
-use Ambax\CryptoTrade\Repositories\Database\WalletRepositoryService;
 use Ambax\CryptoTrade\Response;
-use Ambax\CryptoTrade\Services\Currency;
-use Ambax\CryptoTrade\Services\User;
+use Ambax\CryptoTrade\Services\CurrencyService;
+use Ambax\CryptoTrade\Services\RepositoryServices\TransactionRepositoryService;
+use Ambax\CryptoTrade\Services\RepositoryServices\WalletRepositoryService;
+use Ambax\CryptoTrade\Services\UserService;
 use Carbon\Carbon;
 use Exception;
 use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
 use TypeError;
 
-class Controller
+class TransactionController
 {
-    private User $user;
-    private UserRepositoryService $db;
+    private UserService $user;
     private array $latestCurrencyUpdate;
-    public const REQUEST_LIMIT = 100;
     public function __construct(
         Logger                       $logger,
-        UserRepositoryService        $database,
+        StreamHandler                $loggerStreamHandler,
         TransactionRepositoryService $transactionRepository,
         WalletRepositoryService      $walletRepository,
-        User                         $user,
+        UserService                  $user,
         Api                          $api
     )
     {
         $this->logger = $logger->withName('Controller');
-        $this->logger->pushHandler(new StreamHandler('app.log'));
-        $this->db = $database;
+        $this->logger->pushHandler($loggerStreamHandler);
         $this->transactionRepository = $transactionRepository;
         $this->walletRepository = $walletRepository;
         $this->user = $user;
         $this->exchangeApi = $api;
         $this->latestCurrencyUpdate = $this->exchangeApi->get();
-    }
-    public function index(): Response
-    {
-        return new Response(
-            ['currencies' => $this->latestCurrencyUpdate],
-            'index'
-        );
-    }
-    public function show(): Response
-    {
-        $vars = htmlspecialchars(strtoupper($_POST['symbol']), ENT_QUOTES, 'UTF-8');
-        return new Response(['currencies' => [Currency::searchBySymbol($vars, $this->latestCurrencyUpdate)]], 'show');
-    }
-    public function status(): Response
-    {
-        $wallet = $this->walletRepository->selectUserWallet($this->user->getId());
-        $content = [];
-        foreach ($wallet->getPortfolio() as $key => $amount) {
-            try {
-                $content[] = [
-                    'symbol' => $key,
-                    'amount' => $amount,
-                    'transactions' => count($this->transactionRepository->selectTransactionsBySymbol(
-                        $this->user->getId(),
-                        $key
-                    )),
-                    'profit' => $key == 'USD' ? "NaN" : number_format(
-                            $this->user->calcProfit($key, $this->latestCurrencyUpdate),
-                            2,
-                            '.',
-                            '') . "%"
-                ];
-            } catch (Exception $e) {
-                throw new Exception($e->getMessage());
-            }
-        }
-        return new Response(['items' => $content], 'status');
     }
     public function history(): Response
     {
@@ -83,7 +42,7 @@ class Controller
     {
         $symbol = htmlspecialchars(strtoupper($_POST['symbol']), ENT_QUOTES, 'UTF-8');
         $cost = htmlspecialchars($_POST['amount'], ENT_QUOTES, 'UTF-8');
-        $currency = Currency::searchBySymbol($symbol, $this->latestCurrencyUpdate);
+        $currency = CurrencyService::searchBySymbol($symbol, $this->latestCurrencyUpdate);
         if( ! $currency) {
             throw new Exception('Could not find symbol ' . $symbol . "\n");
         }
@@ -102,7 +61,7 @@ class Controller
         $this->user->addToWallet($currency->getSymbol(), $boughtAmount);
         $this->transactionRepository->insertTransaction(
             $this->user->getId(),
-            Carbon::now(User::DEFAULT_TIMEZONE)->toDateTimeString(),
+            Carbon::now(UserService::DEFAULT_TIMEZONE)->toDateTimeString(),
             'Buy',
             $boughtAmount,
             $symbol,
@@ -115,7 +74,7 @@ class Controller
         $symbol = htmlspecialchars(strtoupper($_POST['symbol']), ENT_QUOTES, 'UTF-8');
         $amount = htmlspecialchars($_POST['amount'], ENT_QUOTES, 'UTF-8');
         $wallet = $this->walletRepository->selectUserWallet($this->user->getId());
-        $currency = Currency::searchBySymbol($symbol, $this->latestCurrencyUpdate);
+        $currency = CurrencyService::searchBySymbol($symbol, $this->latestCurrencyUpdate);
 
         if (empty($symbol) || empty($amount)) {
             throw new Exception('Fields cannot be empty!');
@@ -141,7 +100,7 @@ class Controller
         $this->user->addToWallet($this->user->getCurrency(), $inClientCurrency);
         $this->transactionRepository->insertTransaction(
             $this->user->getId(),
-            Carbon::now(User::DEFAULT_TIMEZONE)->toDateTimeString(),
+            Carbon::now(UserService::DEFAULT_TIMEZONE)->toDateTimeString(),
             'Sell',
             $amount,
             $symbol,

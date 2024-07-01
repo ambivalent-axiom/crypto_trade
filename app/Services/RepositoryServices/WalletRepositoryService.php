@@ -1,15 +1,19 @@
 <?php
-namespace Ambax\CryptoTrade\Repositories\Database;
+namespace Ambax\CryptoTrade\Services\RepositoryServices;
 use Ambax\CryptoTrade\Models\Wallet;
+use Ambax\CryptoTrade\Repositories\Database\Database;
 use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
 
 class WalletRepositoryService
 {
-    public function __construct(Logger $logger, Database $db)
+    public function __construct(
+        Logger $logger,
+        StreamHandler $loggerStreamHandler,
+        Database $db)
     {
         $this->logger = $logger->withName('Database');
-        $this->logger->pushHandler(new StreamHandler('app.log'));
+        $this->logger->pushHandler($loggerStreamHandler);
         $this->database = $db::set();
     }
     public function addToWallet(

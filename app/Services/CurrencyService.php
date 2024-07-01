@@ -1,6 +1,6 @@
 <?php
 namespace Ambax\CryptoTrade\Services;
-class Currency
+class CurrencyService
 {
     private string $name;
     private string $symbol;
@@ -23,7 +23,7 @@ class Currency
     {
         return $this->price;
     }
-    public static function searchBySymbol(string $query, array $currencies): ?Currency
+    public static function searchBySymbol(string $query, array $currencies): ?CurrencyService
     {
         foreach ($currencies as $currency) {
             if ($currency->getSymbol() == $query) {

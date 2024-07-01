@@ -21,4 +21,5 @@ class Wallet
     {
         $this->portfolio[$currency] = $amount;
     }
+
 }

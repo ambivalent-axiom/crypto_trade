@@ -1,13 +1,13 @@
 <?php
 namespace Ambax\CryptoTrade\Services;
-use Ambax\CryptoTrade\Repositories\Database\UserRepositoryService;
-use Ambax\CryptoTrade\Repositories\Database\WalletRepositoryService;
+use Ambax\CryptoTrade\Services\RepositoryServices\UserRepositoryService;
+use Ambax\CryptoTrade\Services\RepositoryServices\WalletRepositoryService;
 use Carbon\Carbon;
 use Error;
 use Exception;
 use Ramsey\Uuid\Uuid;
 
-class User
+class UserService
 {
     private string $name;
     private string $id;
@@ -18,16 +18,16 @@ class User
     public const DEFAULT_TIMEZONE = 'Europe/Riga';
     public function __construct(
         string                  $name,
-        UserRepositoryService   $database,
         WalletRepositoryService $walletRepository,
+        UserRepositoryService   $userRepository,
         string                  $id = null,
         string                  $currency = Null,
         string                  $password = null
     )
     {
         $this->name = $name;
-        $this->db = $database;
         $this->walletRepository = $walletRepository;
+        $this->userRepository = $userRepository;
         $this->id = $id ?? Uuid::uuid4()->toString();
         $this->currency = $currency ?? self::DEFAULT_CURRENCY;
         $this->password = $password ?? '';
@@ -61,12 +61,10 @@ class User
         }
         $this->walletRepository->updateWallet($this->getId(), $symbol, $newAmount);
     }
-    public function getWalletCurrencies(): array// of keys - strings
+    public function getWalletCurrencies(): array
     {
-        $keys = [];
-        foreach ($this->walletRepository->selectUserWallet($this->getId()) as $currency) {
-            $keys[] = $currency['currency'];
-        }
+        $currencies = $this->walletRepository->selectUserWallet($this->getId());
+        $keys = array_keys($currencies->getPortfolio());
         unset($keys[array_search($this->currency, $keys)]);
         return $keys;
     }
@@ -87,7 +85,7 @@ class User
     public function setPassword(string $password): void
     {
         $this->password = md5($password);
-        $this->db->setUserPass($this->getId(), $this->getPassword());
+        $this->userRepository->setUserPass($this->getId(), $this->getPassword());
     }
     public function getPassword(): string
     {
@@ -107,7 +105,7 @@ class User
                 $symbol
             )
         );
-        $currentPrice = Currency::searchBySymbol($symbol, $currencies);
+        $currentPrice = CurrencyService::searchBySymbol($symbol, $currencies);
         //TODO fix this error
         //if it does not exist in a wallet it will find null
         try {

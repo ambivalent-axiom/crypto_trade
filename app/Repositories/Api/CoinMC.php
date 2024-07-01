@@ -1,8 +1,8 @@
 <?php
 namespace Ambax\CryptoTrade\Repositories\Api;
-use Ambax\CryptoTrade\Controllers\Controller;
-use Ambax\CryptoTrade\Services\Currency;
-use Ambax\CryptoTrade\Services\User;
+use Ambax\CryptoTrade\Controllers\TransactionController;
+use Ambax\CryptoTrade\Services\CurrencyService;
+use Ambax\CryptoTrade\Services\UserService;
 use Exception;
 use GuzzleHttp\Client;
 use Monolog\Handler\StreamHandler;
@@ -31,7 +31,7 @@ class CoinMC implements Api
     }
     public function get(): array
     {
-        $url = 'v1/cryptocurrency/listings/latest?limit=' . Controller::REQUEST_LIMIT;
+        $url = 'v1/cryptocurrency/listings/latest?limit=' . ApiService::REQUEST_LIMIT;
         try {
             $response = $this->client->get($url, ['headers' => $this->headers]);
         } catch (Exception $e) {
@@ -40,10 +40,10 @@ class CoinMC implements Api
         }
         $latest = json_decode($response->getBody()->getContents());
         foreach ($latest->data as $currency) {
-            $currencies[] = new Currency(
+            $currencies[] = new CurrencyService(
                 $currency->name,
                 $currency->symbol,
-                $currency->quote->{User::DEFAULT_CURRENCY}->price
+                $currency->quote->{UserService::DEFAULT_CURRENCY}->price
             );
         }
         return $currencies;

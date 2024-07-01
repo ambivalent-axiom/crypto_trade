@@ -1,5 +1,11 @@
 <?php
 namespace Ambax\CryptoTrade\Controllers;
+use Ambax\CryptoTrade\Exceptions\CouldNotFindSymbol;
+use Ambax\CryptoTrade\Exceptions\EmptyFieldsSubmitException;
+use Ambax\CryptoTrade\Exceptions\ForbiddenSellOperation;
+use Ambax\CryptoTrade\Exceptions\IncorrectAmountException;
+use Ambax\CryptoTrade\Exceptions\InsufficientFunds;
+use Ambax\CryptoTrade\Exceptions\NoCurrencyInPortfolio;
 use Ambax\CryptoTrade\RedirectResponse;
 use Ambax\CryptoTrade\Repositories\Api\Api;
 use Ambax\CryptoTrade\Response;
@@ -8,7 +14,6 @@ use Ambax\CryptoTrade\Services\RepositoryServices\TransactionRepositoryService;
 use Ambax\CryptoTrade\Services\RepositoryServices\WalletRepositoryService;
 use Ambax\CryptoTrade\Services\UserService;
 use Carbon\Carbon;
-use Exception;
 use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
 use TypeError;
@@ -38,23 +43,24 @@ class TransactionController
     {
         return new Response(['records' => $this->transactionRepository->selectAllTransactions($this->user->getId())], 'history');
     }
+
     public function buy(): RedirectResponse
     {
         $symbol = htmlspecialchars(strtoupper($_POST['symbol']), ENT_QUOTES, 'UTF-8');
         $cost = htmlspecialchars($_POST['amount'], ENT_QUOTES, 'UTF-8');
         $currency = CurrencyService::searchBySymbol($symbol, $this->latestCurrencyUpdate);
         if( ! $currency) {
-            throw new Exception('Could not find symbol ' . $symbol . "\n");
+            throw new CouldNotFindSymbol("Could not locate $symbol!");
         }
         if($cost > $this->walletRepository->selectAmountByCurrency(
                 $this->user->getId(), $this->user->getCurrency())) {
-            throw new Exception('Insufficient wallet balance for this transaction!' . "\n");
+            throw new InsufficientFunds("Insufficient wallet balance for this transaction!");
         }
         $boughtAmount = $cost/$currency->getPrice();
         try {
             $this->user->takeFromWallet($this->user->getCurrency(), $cost);
         } catch (TypeError $e) {
-            throw new Exception('Amount should be numeric and cannot be empty!');
+            throw new IncorrectAmountException("Check the value You have provided for amount");
         }
 
 
@@ -77,22 +83,22 @@ class TransactionController
         $currency = CurrencyService::searchBySymbol($symbol, $this->latestCurrencyUpdate);
 
         if (empty($symbol) || empty($amount)) {
-            throw new Exception('Fields cannot be empty!');
+            throw new EmptyFieldsSubmitException("Fields cannot be empty!");
         }
         if ($amount <= 0 || ! is_numeric($amount)) {
-            throw new Exception('Wrong amount!');
+            throw new IncorrectAmountException("Check the value You have provided for amount");
         }
         if ($symbol == 'USD') {
-            throw new Exception("Forbidden sell operation with USD!");
+            throw new ForbiddenSellOperation("You cannot sell $symbol!");
         }
         if(empty($currency)) {
-            throw new Exception('Could not find symbol ' . $symbol);
+            throw new CouldNotFindSymbol("Symbol '$symbol' not found!");
         }
         if ( ! in_array($symbol, array_keys($wallet->getPortfolio()))) {
-            throw new Exception("You don't have such currency in Your protfolio!");
+            throw new NoCurrencyInPortfolio("Your portfolio does not have $symbol");
         }
         if ($wallet->getPortfolio()[$symbol] < $amount) {
-            throw new Exception('Insufficient wallet balance for this transaction!');
+            throw new InsufficientFunds("Insufficient wallet balance for this transaction!");
         }
 
         $inClientCurrency = $amount * $currency->getPrice();

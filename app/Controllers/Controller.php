@@ -2,7 +2,9 @@
 namespace Ambax\CryptoTrade\Controllers;
 use Ambax\CryptoTrade\RedirectResponse;
 use Ambax\CryptoTrade\Repositories\Api\Api;
-use Ambax\CryptoTrade\Repositories\Database\SqLite;
+use Ambax\CryptoTrade\Repositories\Database\UserRepositoryService;
+use Ambax\CryptoTrade\Repositories\Database\TransactionRepositoryService;
+use Ambax\CryptoTrade\Repositories\Database\WalletRepositoryService;
 use Ambax\CryptoTrade\Response;
 use Ambax\CryptoTrade\Services\Currency;
 use Ambax\CryptoTrade\Services\User;
@@ -15,13 +17,23 @@ use TypeError;
 class Controller
 {
     private User $user;
-    private SqLite $db;
+    private UserRepositoryService $db;
     private array $latestCurrencyUpdate;
     public const REQUEST_LIMIT = 100;
-    public function __construct(Logger $logger, SqLite $sqLite, User $user, Api $api) {
+    public function __construct(
+        Logger                       $logger,
+        UserRepositoryService        $database,
+        TransactionRepositoryService $transactionRepository,
+        WalletRepositoryService      $walletRepository,
+        User                         $user,
+        Api                          $api
+    )
+    {
         $this->logger = $logger->withName('Controller');
         $this->logger->pushHandler(new StreamHandler('app.log'));
-        $this->db = $sqLite;
+        $this->db = $database;
+        $this->transactionRepository = $transactionRepository;
+        $this->walletRepository = $walletRepository;
         $this->user = $user;
         $this->exchangeApi = $api;
         $this->latestCurrencyUpdate = $this->exchangeApi->get();
@@ -40,14 +52,17 @@ class Controller
     }
     public function status(): Response
     {
-        $wallet = $this->db->selectUserWallet($this->user->getId());
+        $wallet = $this->walletRepository->selectUserWallet($this->user->getId());
         $content = [];
         foreach ($wallet->getPortfolio() as $key => $amount) {
             try {
                 $content[] = [
                     'symbol' => $key,
                     'amount' => $amount,
-                    'transactions' => count($this->db->selectTransactionsBySymbol($this->user->getId(), $key)),
+                    'transactions' => count($this->transactionRepository->selectTransactionsBySymbol(
+                        $this->user->getId(),
+                        $key
+                    )),
                     'profit' => $key == 'USD' ? "NaN" : number_format(
                             $this->user->calcProfit($key, $this->latestCurrencyUpdate),
                             2,
@@ -62,7 +77,7 @@ class Controller
     }
     public function history(): Response
     {
-        return new Response(['records' => $this->db->selectAllTransactions($this->user->getId())], 'history');
+        return new Response(['records' => $this->transactionRepository->selectAllTransactions($this->user->getId())], 'history');
     }
     public function buy(): RedirectResponse
     {
@@ -72,7 +87,7 @@ class Controller
         if( ! $currency) {
             throw new Exception('Could not find symbol ' . $symbol . "\n");
         }
-        if($cost > $this->db->selectAmountByCurrency(
+        if($cost > $this->walletRepository->selectAmountByCurrency(
                 $this->user->getId(), $this->user->getCurrency())) {
             throw new Exception('Insufficient wallet balance for this transaction!' . "\n");
         }
@@ -85,7 +100,7 @@ class Controller
 
 
         $this->user->addToWallet($currency->getSymbol(), $boughtAmount);
-        $this->db->insertTransaction(
+        $this->transactionRepository->insertTransaction(
             $this->user->getId(),
             Carbon::now(User::DEFAULT_TIMEZONE)->toDateTimeString(),
             'Buy',
@@ -99,7 +114,7 @@ class Controller
     {
         $symbol = htmlspecialchars(strtoupper($_POST['symbol']), ENT_QUOTES, 'UTF-8');
         $amount = htmlspecialchars($_POST['amount'], ENT_QUOTES, 'UTF-8');
-        $wallet = $this->db->selectUserWallet($this->user->getId());
+        $wallet = $this->walletRepository->selectUserWallet($this->user->getId());
         $currency = Currency::searchBySymbol($symbol, $this->latestCurrencyUpdate);
 
         if (empty($symbol) || empty($amount)) {
@@ -124,7 +139,7 @@ class Controller
         $inClientCurrency = $amount * $currency->getPrice();
         $this->user->takeFromWallet($symbol, $amount);
         $this->user->addToWallet($this->user->getCurrency(), $inClientCurrency);
-        $this->db->insertTransaction(
+        $this->transactionRepository->insertTransaction(
             $this->user->getId(),
             Carbon::now(User::DEFAULT_TIMEZONE)->toDateTimeString(),
             'Sell',

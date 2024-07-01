@@ -1,6 +1,7 @@
 <?php
 namespace Ambax\CryptoTrade\Services;
-use Ambax\CryptoTrade\Repositories\Database\SqLite;
+use Ambax\CryptoTrade\Repositories\Database\UserRepositoryService;
+use Ambax\CryptoTrade\Repositories\Database\WalletRepositoryService;
 use Carbon\Carbon;
 use Error;
 use Exception;
@@ -16,15 +17,17 @@ class User
     public const DEFAULT_WALLET = 1000;
     public const DEFAULT_TIMEZONE = 'Europe/Riga';
     public function __construct(
-        string $name,
-        SqLite $sqLite,
-        string $id = null,
-        string $currency = Null,
-        string $password = null
+        string                  $name,
+        UserRepositoryService   $database,
+        WalletRepositoryService $walletRepository,
+        string                  $id = null,
+        string                  $currency = Null,
+        string                  $password = null
     )
     {
         $this->name = $name;
-        $this->db = $sqLite;
+        $this->db = $database;
+        $this->walletRepository = $walletRepository;
         $this->id = $id ?? Uuid::uuid4()->toString();
         $this->currency = $currency ?? self::DEFAULT_CURRENCY;
         $this->password = $password ?? '';
@@ -39,29 +42,29 @@ class User
     }
     public function addToWallet(string $symbol, float $amount): void
     {
-        $currentAmount = $this->db->selectAmountByCurrency($this->getId(), $symbol);
+        $currentAmount = $this->walletRepository->selectAmountByCurrency($this->getId(), $symbol);
         $currencies = $this->getWalletCurrencies();
         $currencies[] = $this->currency;
         if(in_array($symbol, $currencies)) {
             $amount = $currentAmount + $amount;
-            $this->db->updateWallet($this->getId(), $symbol, $amount);
+            $this->walletRepository->updateWallet($this->getId(), $symbol, $amount);
         } else {
-            $this->db->addToWallet($this->getId(), $symbol, $amount, Carbon::now()->toDateTimeString());
+            $this->walletRepository->addToWallet($this->getId(), $symbol, $amount, Carbon::now()->toDateTimeString());
         }
     }
     public function takeFromWallet(string $symbol, float $amount): void
     {
-        $oldAmount = $this->db->selectAmountByCurrency($this->getId(), $symbol);
+        $oldAmount = $this->walletRepository->selectAmountByCurrency($this->getId(), $symbol);
         $newAmount = $oldAmount - $amount;
         if($symbol != 'USD' && $newAmount == 0) {
-            $this->db->deleteFromWallet($this->getId(), $symbol);
+            $this->walletRepository->deleteFromWallet($this->getId(), $symbol);
         }
-        $this->db->updateWallet($this->getId(), $symbol, $newAmount);
+        $this->walletRepository->updateWallet($this->getId(), $symbol, $newAmount);
     }
     public function getWalletCurrencies(): array// of keys - strings
     {
         $keys = [];
-        foreach ($this->db->selectUserWallet($this->getId()) as $currency) {
+        foreach ($this->walletRepository->selectUserWallet($this->getId()) as $currency) {
             $keys[] = $currency['currency'];
         }
         unset($keys[array_search($this->currency, $keys)]);
@@ -69,7 +72,7 @@ class User
     }
     public function getCurrencyAmount(string $symbol): float
     {
-        $wallet = $this->db->selectUserWallet($this->getId());
+        $wallet = $this->walletRepository->selectUserWallet($this->getId());
         foreach ($wallet as $currency) {
             if ($currency['currency'] == $symbol) {
                 return $currency['amount'];
@@ -96,10 +99,10 @@ class User
     }
     public function calcProfit($symbol, $currencies): float
     {
-        $averageBuy = $this->db->selectAvgPrice(
+        $averageBuy = $this->walletRepository->selectAvgPrice(
             $this->id,
             $symbol,
-            $this->db->selectCurrencySince(
+            $this->walletRepository->selectCurrencySince(
                 $this->id,
                 $symbol
             )

@@ -2,7 +2,7 @@
 <body>
 {% include 'menu.html.twig' %}
 <h1>Transaction history</h1>
-<table border="0">
+<table class="styled-table">
     <thead>
     <tr>
         <th>Timestamp</th>
@@ -15,11 +15,11 @@
     <tbody>
     {% for record in records %}
         <tr>
-            <td>{{ record.getTimestamp() }}</td>
-            <td>{{ record.getAct() }}</td>
-            <td>{{ record.getAmount()|number_format(8, '.', '') }}</td>
-            <td>{{ record.getSymbol() }}</td>
-            <td>{{ record.getLocalCurrency()|number_format(2, '.', '') }}</td>
+            <td>{{ record.timestamp }}</td>
+            <td>{{ record.act }}</td>
+            <td>{{ record.amount|number_format(8, '.', '') }}</td>
+            <td>{{ record.symbol }}</td>
+            <td>{{ record.localCurrency|number_format(2, '.', '') }}</td>
         </tr>
     {% endfor %}
     </tbody>

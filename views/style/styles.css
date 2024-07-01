@@ -17,10 +17,48 @@ a {
     text-decoration: none;
     color: black;
 }
-
+a:hover {
+    background-color: #936db2;
+}
 table {
     margin-bottom: 10px;
     margin-left: 20px;
+}
+
+table.styled-table {
+    border-collapse: collapse;
+    margin: 25px 0;
+    font-size: 18px;
+    min-width: 400px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+}
+
+table.styled-table thead tr {
+    background-color: #290342;
+    color: #ffffff;
+    text-align: left;
+}
+
+table.styled-table th,
+table.styled-table td {
+    padding: 12px 15px;
+}
+
+table.styled-table tbody tr {
+    border-bottom: 1px solid #dddddd;
+}
+
+table.styled-table tbody tr:nth-of-type(even) {
+    background-color: #f3f3f3;
+}
+
+table.styled-table tbody tr:last-of-type {
+    border-bottom: 2px solid #290342;
+}
+
+table.styled-table tbody tr.active-row {
+    font-weight: bold;
+    color: #290342;
 }
 
 form {
@@ -67,7 +105,7 @@ input[type="text"] {
 
 input[type="submit"] {
     padding: 10px 15px;
-    background-color: #007bff;
+    background-color: #290342;
     color: #fff;
     border: none;
     border-radius: 4px;
@@ -76,8 +114,9 @@ input[type="submit"] {
 }
 
 input[type="submit"]:hover {
-    background-color: #0056b3;
+    background-color: #6a0da6;
 }
 
 .btn:hover {
-    background-color: #0056b3;
+    background-color: #6a0da6;
+}

@@ -1,5 +1,8 @@
 <?php
 require_once "vendor/autoload.php";
+
+use Ambax\CryptoTrade\RedirectResponse;
+use Ambax\CryptoTrade\Response;
 use Twig\Environment;
 use Twig\Error\LoaderError;
 use Twig\Error\RuntimeError;
@@ -43,20 +46,30 @@ switch ($case) {
         break;
     case FastRoute\Dispatcher::FOUND:
         [$controller, $route] = $handler;
-        $origin = $_SERVER['REQUEST_URI'];
         try {
-            /** @var Ambax\CryptoTrade\Response $items */
             $items = ($container->get($controller))->$route(...array_values($vars));
         } catch (Exception $e) {
-            $route = 'error';
-            $items = $e->getMessage();
+            $items = new RedirectResponse('notify', $e->getMessage());
         }
-        try {
-            echo $twig->render(
-                $items->getAddress() . '.html.twig',
-                $items->getData()
-            );
-        } catch (LoaderError | RuntimeError | SyntaxError $e) {
+        if ($items instanceof Response) {
+            try {
+                echo $twig->render(
+                    $items->getAddress() . '.html.twig',
+                    $items->getData()
+                );
+            } catch (LoaderError | RuntimeError | SyntaxError $e) {
+                $items = new RedirectResponse('notify', $e->getMessage());
+            }
+        }
+        if ($items instanceof RedirectResponse) {
+            try {
+                echo $twig->render(
+                    $items->getAddress() . '.html.twig',
+                    $items->getMessage()
+                );
+            } catch (LoaderError | RuntimeError | SyntaxError $e) {
+            }
         }
         break;
 }
+

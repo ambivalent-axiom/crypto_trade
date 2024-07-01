@@ -1,5 +1,6 @@
 <?php
 namespace Ambax\CryptoTrade\Controllers;
+use Ambax\CryptoTrade\RedirectResponse;
 use Ambax\CryptoTrade\Repositories\Api\Api;
 use Ambax\CryptoTrade\Repositories\Database\SqLite;
 use Ambax\CryptoTrade\Response;
@@ -63,7 +64,7 @@ class Controller
     {
         return new Response(['records' => $this->db->selectAllTransactions($this->user->getId())], 'history');
     }
-    public function buy(): void
+    public function buy(): RedirectResponse
     {
         $symbol = htmlspecialchars(strtoupper($_POST['symbol']), ENT_QUOTES, 'UTF-8');
         $cost = htmlspecialchars($_POST['amount'], ENT_QUOTES, 'UTF-8');
@@ -92,8 +93,9 @@ class Controller
             $symbol,
             $cost
         );
+        return new RedirectResponse('/notify', 'Buy operation completed!');
     }
-    public function sell(): void
+    public function sell(): RedirectResponse
     {
         $symbol = htmlspecialchars(strtoupper($_POST['symbol']), ENT_QUOTES, 'UTF-8');
         $amount = htmlspecialchars($_POST['amount'], ENT_QUOTES, 'UTF-8');
@@ -130,5 +132,6 @@ class Controller
             $symbol,
             $inClientCurrency
         );
+        return new RedirectResponse('/notify', 'Sell operation completed!');
     }
 }

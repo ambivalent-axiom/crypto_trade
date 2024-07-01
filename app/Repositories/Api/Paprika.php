@@ -1,8 +1,8 @@
 <?php
-namespace Ambax\CryptoTrade\Repositories;
-use Ambax\CryptoTrade\Controllers\Controller;
-use Ambax\CryptoTrade\Models\Currency;
-use Ambax\CryptoTrade\Models\User;
+namespace Ambax\CryptoTrade\Repositories\Api;
+use Ambax\CryptoTrade\Controllers\TransactionController;
+use Ambax\CryptoTrade\Services\CurrencyService;
+use Ambax\CryptoTrade\Services\UserService;
 use Exception;
 use GuzzleHttp\Client;
 use Monolog\Handler\StreamHandler;
@@ -23,17 +23,17 @@ class Paprika implements Api
     public function get(): array
     {
         try {
-            $response = $this->client->get('tickers?limit=' . Controller::REQUEST_LIMIT);
+            $response = $this->client->get('tickers?limit=' . ApiService::REQUEST_LIMIT);
         } catch (Exception $e) {
             $this->logger->error($e->getMessage());
             return [];
         }
         $latest = json_decode($response->getBody()->getContents());
         foreach ($latest as $currency) {
-            $currencies[] = new Currency(
+            $currencies[] = new CurrencyService(
                 $currency->name,
                 $currency->symbol,
-                $currency->quotes->{User::DEFAULT_CURRENCY}->price
+                $currency->quotes->{UserService::DEFAULT_CURRENCY}->price
             );
         }
         return $currencies;

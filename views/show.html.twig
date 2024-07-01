@@ -2,7 +2,7 @@
 <body>
 {% include 'menu.html.twig' %}
 <h1>Search results</h1>
-<table border="0">
+<table class="styled-table">
     <thead>
     <tr>
         <th>Name</th>
@@ -11,11 +11,11 @@
     </tr>
     </thead>
     <tbody>
-    {% for item in items %}
+    {% for currency in currencies %}
         <tr>
-            <td>{{ item.getName() }}</td>
-            <td>{{ item.getSymbol() }}</td>
-            <td>{{ item.getPrice()|number_format(8, '.', '') }} </td>
+            <td>{{ currency.name }}</td>
+            <td>{{ currency.symbol }}</td>
+            <td>{{ currency.price|number_format(8, '.', '') }}</td>
         </tr>
     {% endfor %}
     </tbody>

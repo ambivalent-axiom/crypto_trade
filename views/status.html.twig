@@ -4,7 +4,7 @@
 <h1>Wallet Status</h1>
 <div class="container">
     <div>
-        <table border="0">
+        <table class="styled-table">
             <thead>
             <tr>
                 <th>Symbol</th>
@@ -16,10 +16,10 @@
             <tbody>
             {% for item in items %}
                 <tr>
-                    <td>{{ item['symbol'] }}</td>
-                    <td>{{ item['amount']|number_format(8, '.', '') }}</td>
-                    <td>{{ item['transactions'] }}</td>
-                    <td>{{ item['profit'] }}</td>
+                    <td>{{ item.symbol }}</td>
+                    <td>{{ item.amount|number_format(8, '.', '') }}</td>
+                    <td>{{ item.transactions }}</td>
+                    <td>{{ item.profit }}</td>
                 </tr>
             {% endfor %}
             </tbody>

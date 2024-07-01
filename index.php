@@ -1,23 +1,30 @@
 <?php
-use Ambax\CryptoTrade\Controllers\Controller;
+require_once "vendor/autoload.php";
+
+use Ambax\CryptoTrade\RedirectResponse;
+use Ambax\CryptoTrade\Response;
 use Twig\Environment;
+use Twig\Error\LoaderError;
+use Twig\Error\RuntimeError;
+use Twig\Error\SyntaxError;
 use Twig\Loader\FilesystemLoader;
 
-require_once "vendor/autoload.php";
+$container = (require 'app/Controllers/DIConfigs/controllerDIconfig.php')();
+
 $dotenv = Dotenv\Dotenv::createUnsafeImmutable(__DIR__);
 $dotenv->load();
-$loader = new FilesystemLoader(__DIR__ . '/app/Templates');
+$loader = new FilesystemLoader(__DIR__ . '/views');
 $twig = new Environment($loader, [
     'cache' => false,
 ]);
 
 $dispatcher = FastRoute\simpleDispatcher(function(FastRoute\RouteCollector $r) {
-    $r->addRoute('GET', '/', [Controller::class, 'index']);
-    $r->addRoute('GET', '/wallet', [Controller::class, 'status']);
-    $r->addRoute('GET', '/hist', [Controller::class, 'history']);
-    $r->addRoute('POST', '/show', [Controller::class, 'show']);
-    $r->addRoute('POST','/', [Controller::class, 'buy']);
-    $r->addRoute('POST','/wallet', [Controller::class, 'sell']);
+    $routes = include ('routes.php');
+    foreach ($routes as $route)
+    {
+        [$method, $path, $controller] = $route;
+        $r->addRoute($method, $path, $controller);
+    }
 });
 
 // Fetch method and URI from somewhere
@@ -28,9 +35,9 @@ if (false !== $pos = strpos($uri, '?')) {
     $uri = substr($uri, 0, $pos);
 }
 $uri = rawurldecode($uri);
-[$response, $handler, $vars] = $dispatcher->dispatch($httpMethod, $uri);
+[$case, $handler, $vars] = $dispatcher->dispatch($httpMethod, $uri);
 
-switch ($response) {
+switch ($case) {
     case FastRoute\Dispatcher::NOT_FOUND:
         // ... 404 Not Found
         break;
@@ -39,13 +46,30 @@ switch ($response) {
         break;
     case FastRoute\Dispatcher::FOUND:
         [$controller, $route] = $handler;
-        $origin = $_SERVER['REQUEST_URI'];
         try {
-            $items = (new $controller)->$route(...array_values($vars));
+            $items = ($container->get($controller))->$route(...array_values($vars));
         } catch (Exception $e) {
-            $route = 'error';
-            $items = $e->getMessage();
+            $items = new RedirectResponse('notify', $e->getMessage());
         }
-        echo $twig->render($route . '.html.twig', ['items' => $items, 'loc' => $origin]);
+        if ($items instanceof Response) {
+            try {
+                echo $twig->render(
+                    $items->getAddress() . '.html.twig',
+                    $items->getData()
+                );
+            } catch (LoaderError | RuntimeError | SyntaxError $e) {
+                $items = new RedirectResponse('notify', $e->getMessage());
+            }
+        }
+        if ($items instanceof RedirectResponse) {
+            try {
+                echo $twig->render(
+                    $items->getAddress() . '.html.twig',
+                    $items->getMessage()
+                );
+            } catch (LoaderError | RuntimeError | SyntaxError $e) {
+            }
+        }
         break;
 }
+

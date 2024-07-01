@@ -1,5 +1,5 @@
 <?php
-namespace Ambax\CryptoTrade\Repositories;
+namespace Ambax\CryptoTrade\Repositories\Api;
 interface Api {
     public function get(): array;
 }

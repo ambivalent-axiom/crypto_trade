@@ -27,12 +27,15 @@ class Controller
     }
     public function index(): Response
     {
-        return new Response($this->latestCurrencyUpdate, 'index');
+        return new Response(
+            ['currencies' => $this->latestCurrencyUpdate],
+            'index'
+        );
     }
     public function show(): Response
     {
         $vars = htmlspecialchars(strtoupper($_POST['symbol']), ENT_QUOTES, 'UTF-8');
-        return new Response([Currency::searchBySymbol($vars, $this->latestCurrencyUpdate)], 'show');
+        return new Response(['currencies' => [Currency::searchBySymbol($vars, $this->latestCurrencyUpdate)]], 'show');
     }
     public function status(): Response
     {
@@ -54,11 +57,11 @@ class Controller
                 throw new Exception($e->getMessage());
             }
         }
-        return new Response($content, 'status');
+        return new Response(['items' => $content], 'status');
     }
     public function history(): Response
     {
-        return new Response($this->db->selectAllTransactions($this->user->getId()), 'history');
+        return new Response(['records' => $this->db->selectAllTransactions($this->user->getId())], 'history');
     }
     public function buy(): void
     {

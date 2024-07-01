@@ -11,11 +11,11 @@
     </tr>
     </thead>
     <tbody>
-    {% for item in items %}
+    {% for currency in currencies %}
         <tr>
-            <td>{{ item.getName() }}</td>
-            <td>{{ item.getSymbol() }}</td>
-            <td>{{ item.getPrice()|number_format(8, '.', '') }} </td>
+            <td>{{ currency.getName() }}</td>
+            <td>{{ currency.getSymbol() }}</td>
+            <td>{{ currency.getPrice()|number_format(8, '.', '') }} </td>
         </tr>
     {% endfor %}
     </tbody>

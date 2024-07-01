@@ -13,13 +13,13 @@
     </tr>
     </thead>
     <tbody>
-    {% for item in items %}
+    {% for record in records %}
         <tr>
-            <td>{{ item.getTimestamp() }}</td>
-            <td>{{ item.getAct() }}</td>
-            <td>{{ item.getAmount()|number_format(8, '.', '') }}</td>
-            <td>{{ item.getSymbol() }}</td>
-            <td>{{ item.getLocalCurrency()|number_format(2, '.', '') }}</td>
+            <td>{{ record.getTimestamp() }}</td>
+            <td>{{ record.getAct() }}</td>
+            <td>{{ record.getAmount()|number_format(8, '.', '') }}</td>
+            <td>{{ record.getSymbol() }}</td>
+            <td>{{ record.getLocalCurrency()|number_format(2, '.', '') }}</td>
         </tr>
     {% endfor %}
     </tbody>

@@ -1,9 +1,12 @@
 <?php
 require_once "vendor/autoload.php";
 use Twig\Environment;
+use Twig\Error\LoaderError;
+use Twig\Error\RuntimeError;
+use Twig\Error\SyntaxError;
 use Twig\Loader\FilesystemLoader;
 
-$container = (require 'DIconfig.php')();
+$container = (require 'app/Controllers/DIConfigs/controllerDIconfig.php')();
 
 $dotenv = Dotenv\Dotenv::createUnsafeImmutable(__DIR__);
 $dotenv->load();
@@ -42,13 +45,18 @@ switch ($case) {
         [$controller, $route] = $handler;
         $origin = $_SERVER['REQUEST_URI'];
         try {
+            /** @var Ambax\CryptoTrade\Response $items */
             $items = ($container->get($controller))->$route(...array_values($vars));
         } catch (Exception $e) {
             $route = 'error';
             $items = $e->getMessage();
         }
-        echo $twig->render(
-            $items->getAddress() . '.html.twig',
-            ['items' => $items->getData(), 'loc' => $origin]);
+        try {
+            echo $twig->render(
+                $items->getAddress() . '.html.twig',
+                $items->getData()
+            );
+        } catch (LoaderError | RuntimeError | SyntaxError $e) {
+        }
         break;
 }

@@ -20,3 +20,5 @@ Setup steps:
 3. Update .env.example file with Your https://coinmarketcap.com/ API key.
 4. php -S localhost:8000
 5. Open localhost:8000 in web browser.
+
+-- END OF readme.md --
